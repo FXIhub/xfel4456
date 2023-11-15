@@ -24,7 +24,7 @@ Put any analysis files (bigger than a few megabytes) in /scratch:
 - [x] Get initial geometry (and test with extra-geom)
     - There is a ```usr/geometry/geom_v5.geom``` crystFEL geom file (probably from Oleksandr).
     - To have a look ```python tests/test_geom.py``` (output below)
-- [ ] Jungfrau mask maker
+- [x] Jungfrau mask maker
 - [ ] Calculate number, location and intensity of streaks
 - [ ] Generate streakogram, and virtual powder from above
 - [ ] Save hits to cxi file
