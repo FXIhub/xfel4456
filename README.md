@@ -26,7 +26,17 @@ Put any analysis files (bigger than a few megabytes) in /scratch:
     - To have a look ```python tests/test_geom.py``` (output below)
 - [x] Jungfrau mask maker
     - Example ```python offline/tools/maskmaker.py /gpfs/exfel/exp/SPB/202302/p004456/scratch/powder/powder_r0040.h5/data```
-- [ ] Calculate number, location and intensity of streaks
+- [x] Calculate number, location and intensity of streaks
+    - Example ```sbatch --array=40 offline/slurm/streak_finder.sh```.
+      This outputs an "events" file here:
+      ```
+      h5ls -r /p004456/scratch/events/events_r0040.h5
+      /                        Group
+      /litpixels               Dataset {6066}
+      /streak_list             Dataset {80173/Inf}
+      /streaks                 Dataset {6066}
+      /total_intens            Dataset {6066}
+      ```
 - [ ] Generate streakogram, and virtual powder from above
     - I hear that Ivan is working on this.
 - [ ] Save hits to cxi file
