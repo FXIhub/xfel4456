@@ -30,7 +30,7 @@ import sys
 import time
 import os
 
-from utils import single_streak_finder
+from hit_finding_utils import single_streak_finder
 
 import multiprocessing as mp
 
