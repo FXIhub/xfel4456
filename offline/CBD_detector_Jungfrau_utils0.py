@@ -131,11 +131,11 @@ def JungFrau_mask_maker(assembled_data,thres_mean=60,thres_sigma=2):
         mask[np.where(data_mean>thres_mean)] = 1
         mask[np.where(data_sigma>thres_sigma)] = 1
         mask_nan = np.logical_not(np.isnan(data_mean))
-
+        mask_inf = np.logical_not(np.isinf(data_mean))
 
         mask = np.logical_not(mask)
-        mask = mask*mask_nan
-
+        mask = mask*mask_nan*mask_inf
+        
         #mask = np.logical_not(mask)
 
         stack_arry_dict['stack_arry_img_mask_updated'] = mask
