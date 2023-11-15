@@ -530,7 +530,7 @@ if __name__ == '__main__':
         with h5py.File(args.geometry) as f:
             xyz = f[args.geometry_path][()]
     else :
-        fnam_xyz = 'jungfrau_xyz_map.pickle'
+        fnam_xyz = '/gpfs/exfel/exp/SPB/202302/p004456/scratch/det/jungfrau_xyz_map.pickle'
         xyz = pickle.load(open(fnam_xyz, 'rb'))
     
     if args.mask is not None :
