@@ -173,3 +173,27 @@ geom_file='/gpfs/exfel/exp/XMPL/201750/p700000/proc/r0040/j4m-p2805_v03.geom',ge
 # label_filtered_sorted,weighted_centroid_filtered,props,img_arry,all_labels = \
 # single_peak_finder(img_arry,thld=10,min_pix=5,mask_file='None',interact=True)
 # print(len(label_filtered_sorted))
+
+
+
+def JungFrau_mask_maker(assembled_data,thres_mean=60,thres_sigma=2):
+    
+        data = assembled_data
+        data_mean = np.mean(data,axis=0)
+        data_sigma = np.std(data,axis=0)
+        
+        mask = np.zeros(data.shape[1:])
+    
+        mask[np.where(data_mean>thres_mean)] = 1
+        mask[np.where(data_sigma>thres_sigma)] = 1
+        mask_nan = np.logical_not(np.isnan(data_mean))
+        
+        
+        mask = np.logical_not(mask)
+        mask = mask*mask_nan
+        
+        #mask = np.logical_not(mask)
+        
+        stack_arry_dict['stack_arry_img_mask_updated'] = mask
+        
+        return mask
