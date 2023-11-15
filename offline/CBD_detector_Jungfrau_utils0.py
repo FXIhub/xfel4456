@@ -25,7 +25,7 @@ from extra_geom import JUNGFRAUGeometry
 import glob
 
 def read_train(proposal,run_id,train_ind,\
-geom_file='/gpfs/exfel/exp/XMPL/201750/p700000/proc/r0040/j4m-p2805_v03.geom',geom_assem='False'):
+geom_file='/gpfs/exfel/exp/XMPL/201750/p700000/proc/r0040/j4m-p2805_v03.geom',geom_assem='False',ROI=(0,2400,0,2400)):
     '''
     read the JUNGFRAU detector data from a given train.
     currently, the P700000 run 39 data, there is only one frame in one train.
@@ -64,9 +64,10 @@ geom_file='/gpfs/exfel/exp/XMPL/201750/p700000/proc/r0040/j4m-p2805_v03.geom',ge
         mask_img[np.where(np.isnan(mask_img))] = 0
         mask_img[np.where(np.isinf(mask_img))] = 0
 
-        train_img_dict['adc_img'] = adc_img
-        train_img_dict['gain_img'] = gain_img
-        train_img_dict['mask_img'] = mask_img
+        train_img_dict['adc_img'] = adc_img[ROI[0]:ROI[1],ROI[2]:ROI[3]]
+        train_img_dict['gain_img'] = gain_img[ROI[0]:ROI[1],ROI[2]:ROI[3]]
+        train_img_dict['mask_img'] = mask_img[ROI[0]:ROI[1],ROI[2]:ROI[3]]
+        train_img_dict['ROI'] = ROI
         return train_img_dict
     else:
         sys.error('check the geom_assem argument!')
@@ -76,14 +77,14 @@ geom_file='/gpfs/exfel/exp/XMPL/201750/p700000/proc/r0040/j4m-p2805_v03.geom',ge
 
 
 def get_3d_stack_from_train_ind(proposal,run_id,train_ind_tuple=(0,50,1),\
-geom_file='/gpfs/exfel/exp/XMPL/201750/p700000/proc/r0040/j4m-p2805_v03.geom',geom_assem='False'):
+geom_file='/gpfs/exfel/exp/XMPL/201750/p700000/proc/r0040/j4m-p2805_v03.geom',geom_assem='False',ROI=(0,2400,0,2400)):
 
     train_ind_arry = np.arange(train_ind_tuple[0],train_ind_tuple[1],train_ind_tuple[2])
 
     for m in range(train_ind_arry.shape[0]):
         if m==0:
             train_ind = train_ind_arry[m]
-            train_img_dict = read_train(proposal,run_id,train_ind,geom_file=geom_file,geom_assem=geom_assem)
+            train_img_dict = read_train(proposal,run_id,train_ind,geom_file=geom_file,geom_assem=geom_assem,ROI=ROI)
             stack_arry_module_adc = train_img_dict['module_data_adc']
             stack_arry_module_gain = train_img_dict['module_data_gain']
             stack_arry_module_mask = train_img_dict['module_data_mask']
@@ -93,7 +94,7 @@ geom_file='/gpfs/exfel/exp/XMPL/201750/p700000/proc/r0040/j4m-p2805_v03.geom',ge
                 stack_arry_img_mask = train_img_dict['mask_img']
         else:
             train_ind = train_ind_arry[m]
-            train_img_dict = read_train(proposal,run_id,train_ind,geom_file=geom_file,geom_assem=geom_assem)
+            train_img_dict = read_train(proposal,run_id,train_ind,geom_file=geom_file,geom_assem=geom_assem,ROI=ROI)
             stack_arry_module_adc = np.concatenate((stack_arry_module_adc,train_img_dict['module_data_adc']),axis=0)
             stack_arry_module_gain = np.concatenate((stack_arry_module_gain,train_img_dict['module_data_gain']),axis=0)
             stack_arry_module_mask = np.concatenate((stack_arry_module_mask,train_img_dict['module_data_mask']),axis=0)
@@ -113,10 +114,7 @@ geom_file='/gpfs/exfel/exp/XMPL/201750/p700000/proc/r0040/j4m-p2805_v03.geom',ge
 
 
     return stack_arry_dict
-# img_arry = adc_img
-# label_filtered_sorted,weighted_centroid_filtered,props,img_arry,all_labels = \
-# single_peak_finder(img_arry,thld=10,min_pix=5,mask_file='None',interact=True)
-# print(len(label_filtered_sorted))
+
 
 
 
@@ -135,7 +133,7 @@ def JungFrau_mask_maker(assembled_data,thres_mean=60,thres_sigma=2):
 
         mask = np.logical_not(mask)
         mask = mask*mask_nan*mask_inf
-        
+
         #mask = np.logical_not(mask)
 
         stack_arry_dict['stack_arry_img_mask_updated'] = mask
