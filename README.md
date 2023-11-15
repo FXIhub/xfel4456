@@ -34,3 +34,6 @@ Put any analysis files (bigger than a few megabytes) in /scratch:
 
 ### powder run 40 (test data)
 ![powder_r0040.h5](/tests/powder_r0040.svg)
+
+### mask maker 40 (test data)
+![mask_maker](/tests/mask_maker_test.png)
