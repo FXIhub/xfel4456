@@ -26,5 +26,5 @@ image, centre = geom.position_modules(powder)
 # plot powder directly from data using extra_geom with matplotlib
 fig, ax = plt.subplots()
 ax = geom.plot_data(powder, axis_units='m', ax = ax, vmin=0, vmax=400000)
-plt.savefig('powder_r0040.svg')
+#plt.savefig('powder_r0040.svg')
 plt.show()

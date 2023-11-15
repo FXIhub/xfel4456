@@ -23,9 +23,11 @@ Put any analysis files (bigger than a few megabytes) in /scratch:
     - e.g. ```sbatch --array=40 offline/slurm/powder_sum_array.sh``` to sum all frames in run 40 using vds file.
 - [x] Get initial geometry (and test with extra-geom)
     - There is a ```usr/geometry/geom_v5.geom``` crystFEL geom file (probably from Oleksandr).
-    - To have a look ```python tests/test_geom.py```
+    - To have a look ```python tests/test_geom.py``` (output below)
+- [ ] Jungfrau mask maker
 - [ ] Calculate number, location and intensity of streaks
-- [ ] Generate streakogram from above
+- [ ] Generate streakogram, and virtual powder from above
+- [ ] Save hits to cxi file
 - [ ] Write cxi file from scan runs, for the purpose of speckle-tracking
 
 
