@@ -28,8 +28,10 @@ Put any analysis files (bigger than a few megabytes) in /scratch:
     - Example ```python offline/tools/maskmaker.py /gpfs/exfel/exp/SPB/202302/p004456/scratch/powder/powder_r0040.h5/data```
 - [ ] Calculate number, location and intensity of streaks
 - [ ] Generate streakogram, and virtual powder from above
+    - I hear that Ivan is working on this.
 - [ ] Save hits to cxi file
-- [ ] Write cxi file from scan runs, for the purpose of speckle-tracking
+- [x] Write cxi file from scan runs, for the purpose of speckle-tracking
+    - It seems Margarita already has a means of streaming scan data, with a modified scan log, to the ST software. It would be nice to include this code here.
 
 
 
