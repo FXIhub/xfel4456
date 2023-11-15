@@ -2,6 +2,17 @@
 utilities for reading the JUNGFRAU detector frames and calibration etc.
 facility: EuXFEL, SPB
 
+
+utilities for reading the JUNGFRAU detector frames and calibration etc.
+facility: EuXFEL, SPB
+
+Contacts:
+Chufeng Li                           chufeng.li@cfel.de
+Wenhui Zhang                         wenhui.zhang@desy.de
+Mansi Butola                         mansi.butola@desy.de
+Ivan De Gennaro Aquino               ivan.de.gennaro.aquino@desy.de
+Andrew Morgan                        morganaj@unimelb.edu.au
+Nikolay Ivanov                       nikolay.ivanov@desy.de
 '''
 
 from extra_data import open_run
@@ -11,9 +22,6 @@ import matplotlib.pyplot as plt
 import extra_data
 from extra_data import stack_detector_data
 from extra_geom import JUNGFRAUGeometry
-
-from skimage import measure, morphology, feature
-import scipy
 import glob
 
 def read_train(proposal,run_id,train_ind,\
@@ -177,23 +185,23 @@ geom_file='/gpfs/exfel/exp/XMPL/201750/p700000/proc/r0040/j4m-p2805_v03.geom',ge
 
 
 def JungFrau_mask_maker(assembled_data,thres_mean=60,thres_sigma=2):
-    
+
         data = assembled_data
         data_mean = np.mean(data,axis=0)
         data_sigma = np.std(data,axis=0)
-        
+
         mask = np.zeros(data.shape[1:])
-    
+
         mask[np.where(data_mean>thres_mean)] = 1
         mask[np.where(data_sigma>thres_sigma)] = 1
         mask_nan = np.logical_not(np.isnan(data_mean))
-        
-        
+
+
         mask = np.logical_not(mask)
         mask = mask*mask_nan
-        
+
         #mask = np.logical_not(mask)
-        
+
         stack_arry_dict['stack_arry_img_mask_updated'] = mask
-        
+
         return mask
