@@ -75,20 +75,19 @@ def single_streak_finder(
         all_labels,
     )
 
-
 def plot_streaks(
         label_filtered_sorted,
         weighted_centroid_filtered,
         props,
         img_array,
         all_labels,
-        mask,
+        mask=None,
         interacting=False,
         fig_filename="streak_finding.png",
     ):
 
     plt.figure(figsize=(15, 15))
-    plt.imshow(img_array * (mask.astype(np.int16)), cmap="viridis", origin="upper")
+    plt.imshow(img_array * (mask.astype(np.int16)) if mask is not None else img_array, cmap="viridis", origin="upper")
     plt.colorbar()
     # plt.clim(0,0.5*thld)
     plt.clim(0, 30)
