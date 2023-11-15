@@ -53,11 +53,11 @@ streak_dtype = np.dtype([('frame_index', np.uint32),
                          ('intensity', np.float32), 
                          ('area', np.uint16)])
 
-with h5py.File(args.output_file) as f:
+with h5py.File(args.output_file, 'w') as f:
     f.create_dataset('litpixels', shape = (Nevents,), dtype = np.uint32)
     f.create_dataset('total_intens', shape = (Nevents,), dtype = np.float32)
     f.create_dataset('streaks', shape = (Nevents,), dtype = np.uint16)
-    f.create_dataset('streak_list', shape = (None,), dtype = streak_dtype)
+    f.create_dataset('streak_list', shape = (0,), maxshape = (None,), dtype = streak_dtype)
 
 indices = np.arange(Nevents)
 
@@ -99,6 +99,9 @@ def worker(rank, lock):
             index = my_indices[i]
             frame[:]   = np.squeeze(data[index]).astype(float)
             bad_pix[:] = np.squeeze(mask[index]) != 0
+
+            # corrected jungfrau has wierd values
+            bad_pix[~np.isfinite(frame)] = True
             
             # photon conversion
             if args.ADU_per_photon :
@@ -120,7 +123,7 @@ def worker(rank, lock):
                     _,
                     all_labels,
                 ) = single_streak_finder(
-                    img_array = frame, thld = percentile_threshold, min_pix = args.min_pix
+                    img_array = frame[m], thld = percentile_threshold, min_pix = args.min_pix
                 )
                  
                 # number of streaks
@@ -133,6 +136,9 @@ def worker(rank, lock):
                     streak_list[streak_index]['intensity']   = props[l-1].intensity_mean * props[l-1].area
                     streak_list[streak_index]['area']        = props[l-1].area
                     streak_index += 1
+
+                    if streak_index == streak_list.shape[0] :
+                        streak_list = np.resize(streak_list, (streak_index + N,))
             
             # calculate litpixels 
             litpixels[i] = np.sum(frame > 0)
