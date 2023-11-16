@@ -63,7 +63,8 @@ geom_file='/gpfs/exfel/exp/XMPL/201750/p700000/proc/r0040/j4m-p2805_v03.geom',ge
         mask_img, center = geom.position_modules(mask)
         mask_img[np.where(np.isnan(mask_img))] = 0
         mask_img[np.where(np.isinf(mask_img))] = 0
-
+        
+        #3D slicing
         train_img_dict['adc_img'] = adc_img[:,ROI[0]:ROI[1],ROI[2]:ROI[3]]
         train_img_dict['gain_img'] = gain_img[:,ROI[0]:ROI[1],ROI[2]:ROI[3]]
         train_img_dict['mask_img'] = mask_img[:,ROI[0]:ROI[1],ROI[2]:ROI[3]]
