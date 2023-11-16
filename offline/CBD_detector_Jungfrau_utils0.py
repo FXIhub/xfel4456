@@ -81,29 +81,25 @@ def get_3d_stack_from_train_ind(proposal,run_id,train_ind_tuple=(0,50,1),\
 geom_file='/gpfs/exfel/exp/XMPL/201750/p700000/proc/r0040/j4m-p2805_v03.geom',geom_assem='False',ROI=(0,2400,0,2400)):
 
     train_ind_arry = np.arange(train_ind_tuple[0],train_ind_tuple[1],train_ind_tuple[2])
-
+# list is faster to read in the data (compared with previous ndarray concatenation)  
+    stack_arry_module_adc = []
+    stack_arry_module_gain = []
+    stack_arry_module_mask = []
+    stack_arry_img_adc = []
+    stack_arry_img_gain = []
+    stack_arry_img_mask = []
+    
     for m in range(train_ind_arry.shape[0]):
-        if m==0:
-            train_ind = train_ind_arry[m]
-            train_img_dict = read_train(proposal,run_id,train_ind,geom_file=geom_file,geom_assem=geom_assem,ROI=ROI)
-            stack_arry_module_adc = train_img_dict['module_data_adc']
-            stack_arry_module_gain = train_img_dict['module_data_gain']
-            stack_arry_module_mask = train_img_dict['module_data_mask']
-            if geom_assem=='True':
-                stack_arry_img_adc = train_img_dict['adc_img']
-                stack_arry_img_gain = train_img_dict['gain_img']
-                stack_arry_img_mask = train_img_dict['mask_img']
-        else:
-            train_ind = train_ind_arry[m]
-            train_img_dict = read_train(proposal,run_id,train_ind,geom_file=geom_file,geom_assem=geom_assem,ROI=ROI)
-            stack_arry_module_adc = np.concatenate((stack_arry_module_adc,train_img_dict['module_data_adc']),axis=0)
-            stack_arry_module_gain = np.concatenate((stack_arry_module_gain,train_img_dict['module_data_gain']),axis=0)
-            stack_arry_module_mask = np.concatenate((stack_arry_module_mask,train_img_dict['module_data_mask']),axis=0)
-            if geom_assem=='True':
-                stack_arry_img_adc = np.concatenate((stack_arry_img_adc,train_img_dict['adc_img']),axis=0)
-                stack_arry_img_gain = np.concatenate((stack_arry_img_gain,train_img_dict['gain_img']),axis=0)
-                stack_arry_img_mask = np.concatenate((stack_arry_img_mask,train_img_dict['mask_img']),axis=0)
-
+        train_ind = train_ind_arry[m]
+        train_img_dict = read_train(proposal,run_id,train_ind,geom_file=geom_file,geom_assem=geom_assem,ROI=ROI)
+        stack_arry_module_adc.append(train_img_dict['module_data_adc'])
+        stack_arry_module_gain.append(train_img_dict['module_data_gain'])
+        stack_arry_module_mask.append(train_img_dict['module_data_mask'])
+        if geom_assem=='True':
+            stack_arry_img_adc.append(train_img_dict['adc_img'])
+            stack_arry_img_gain.append(train_img_dict['gain_img'])
+            stack_arry_img_mask.append(train_img_dict['mask_img'])            
+        
     stack_arry_dict = dict()
     stack_arry_dict['stack_arry_module_adc'] = stack_arry_module_adc
     stack_arry_dict['stack_arry_module_gain'] = stack_arry_module_gain
