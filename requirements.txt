@@ -1,0 +1,10 @@
+scikit-image
+numpy
+h5py
+hdf5plugin
+EXtra-data
+EXtra-geom
+matplotlib
+PyQt5
+pyqtgraph 
+tqdm
