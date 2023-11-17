@@ -1,13 +1,13 @@
 #!/bin/bash
 
-#SBATCH --array=5
+#SBATCH --array=
 #SBATCH --time=04:00:00
 #SBATCH --partition=upex
 ##SBATCH --reservation=upex_004456
 #SBATCH --export=ALL
 #SBATCH -J vds
-#SBATCH -o .%j.out
-#SBATCH -e .%j.out
+#SBATCH -o .vds-%4a-%j.out
+#SBATCH -e .vds-%4a-%j.out
 
 # Change the runs to process using the --array option on line 3
 
