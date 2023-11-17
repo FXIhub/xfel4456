@@ -9,8 +9,8 @@ from xfel4456.offline.CBD_detector_Jungfrau_utils0 import read_train
 from xfel4456.offline.hit_finding_utils import single_streak_finder
 
 BEAMTIME_DIR = "/gpfs/exfel/exp/SPB/202302/p004456/"
-PROP_ID = "4456"
-RUN_ID = "0010"
+PROP_ID = "700000"
+RUN_ID = "0039"
 
 # define geometry
 GEOM_FILE = "/gpfs/exfel/exp/XMPL/201750/p700000/proc/r0040/j4m-p2805_v03.geom"
@@ -33,16 +33,16 @@ def get_jungfrau_data_by_random_train_index(
         geom_assem="True",
         geom_file=geometry_file,
     )
-    if rnd_train_index % 3:
-        # some random streaks
-        train_data["module_data_adc"][0][0][100:120, 50:60] = 50
-        train_data["adc_img"][0][100:120, 50:60] = 100
+#     if rnd_train_index % 3:
+#         # some random streaks
+#         train_data["module_data_adc"][0][0][100:120, 50:60] = 50
+#         train_data["adc_img"][0][100:120, 50:60] = 100
 
-        train_data["module_data_adc"][0][0][200:220, 95:105] = 75
-        train_data["adc_img"][0][200:220, 95:105] = 100
+#         train_data["module_data_adc"][0][0][200:220, 95:105] = 75
+#         train_data["adc_img"][0][200:220, 95:105] = 100
 
-        train_data["module_data_adc"][0][0][300:320, 450:470] = 100
-        train_data["adc_img"][0][300:320, 450:470] = 100
+#         train_data["module_data_adc"][0][0][600:620, 450:470] = 100
+#         train_data["adc_img"][0][600:620, 450:470] = 100
     return train_data
 
 
@@ -87,7 +87,7 @@ powder_plot_conf = {
 # streak finding parameters ---------------------
 MIN_STREAKS_THRESHOLD_FOR_HIT = 3
 PIXELS_PERCENT_VALUE = 99.5
-MIN_PIXELS_FOR_STREAK = 50
+MIN_PIXELS_FOR_STREAK = 5
 STREAK_AREA_MAX = 2000
 
 # load mask -------------------------------------
@@ -107,7 +107,7 @@ def jungfrau_powder_hist(
     x_list = []
     y_list = []
     for key, val in streaks_per_module_dict.items():
-        x_this_module = [
+        y_this_module = [
             (
                 jungfrau_geom.get_pixel_positions()[key][
                     int(centroid[0]), int(centroid[1])
@@ -116,7 +116,7 @@ def jungfrau_powder_hist(
             )
             for centroid in val["centroids"]
         ]
-        y_this_module = [
+        x_this_module = [
             (
                 jungfrau_geom.get_pixel_positions()[key][
                     int(centroid[0]), int(centroid[1])
@@ -329,7 +329,7 @@ def onEvent(evt):
         plotting.image.plotImage(
             hist2d_streaks_record,
             group="Hits",
-            msg=f"X] radius: {STREAKOGRAM_CONF_R_BIN_START}:{STREAKOGRAM_CONF_R_BIN_END} pixels ({STREAKOGRAM_CONF_R_BINS} bins)\n"
+            msg=f"X] radius: {STREAKOGRAM_CONF_R_BIN_START}:{STREAKOGRAM_CONF_R_BIN_END} m ({STREAKOGRAM_CONF_R_BINS} bins)\n"
             + f"Y] intensity: {STREAKOGRAM_CONF_I_BIN_START}:{STREAKOGRAM_CONF_I_BIN_END} photons ({STREAKOGRAM_CONF_I_BINS} bins)",
             # aspect_ratio=STREAKOGRAM_CONF_I_BINS / STREAKOGRAM_CONF_R_BINS,
             aspect_ratio=1,
@@ -353,8 +353,8 @@ def onEvent(evt):
         plotting.image.plotImage(
             powder_hist2d_record,
             group="Hits",
-            msg=f"X] x_pos: {POWDER_CONF_X_BIN_START}:{POWDER_CONF_X_BIN_END} pixels ({POWDER_CONF_X_BINS} bins)\n"
-            + f"Y] y_pos: {POWDER_CONF_Y_BIN_START}:{POWDER_CONF_Y_BIN_END} pixels ({POWDER_CONF_Y_BINS} bins)",
+            msg=f"X] x_pos: {POWDER_CONF_X_BIN_START}:{POWDER_CONF_X_BIN_END} m ({POWDER_CONF_X_BINS} bins)\n"
+            + f"Y] y_pos: {POWDER_CONF_Y_BIN_START}:{POWDER_CONF_Y_BIN_END} m ({POWDER_CONF_Y_BINS} bins)",
             history=1000,
             sum_over=True,
         )
