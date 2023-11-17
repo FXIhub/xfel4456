@@ -27,7 +27,8 @@ class StreakHitFinder():
                                       ('area', np.uint16)])
 
     def run(self):
-        nproc = mp.cpu_count()
+        #nproc = mp.cpu_count()
+        nproc = 8
         indices = np.arange(self.num_events)
         # split frames over ranks
         ev_rank = np.linspace(0, self.num_events, nproc+1).astype(int)
@@ -35,11 +36,13 @@ class StreakHitFinder():
         lock = mp.Lock()
 
         with h5py.File(self.output_fname, 'a') as fptr:
+            self.copy_ids(self.vds_fname, fptr)
             self._init_datasets(fptr['entry_1'])
 
         jobs = []
         for m in range(nproc):
-            job = mp.Process(target=self._worker, args=(m, indices[ev_rank[m]:ev_rank[m+1]], lock))
+            job = mp.Process(target=self._worker,
+                             args=(m, indices[ev_rank[m]:ev_rank[m+1]], lock))
             jobs.append(job)
             job.start()
         [j.join() for j in jobs]
@@ -71,8 +74,8 @@ class StreakHitFinder():
         else :
             it = range(N)
 
-        frame = np.empty(FRAME_SHAPE, dtype = float)
-        bad_pix = np.empty(FRAME_SHAPE, dtype = bool)
+        frame = np.empty(FRAME_SHAPE, dtype='f4')
+        bad_pix = np.empty(FRAME_SHAPE, dtype='bool')
 
         litpixels    = np.zeros((N,), dtype = int)
         total_intens = np.zeros((N,), dtype = float)
@@ -87,15 +90,15 @@ class StreakHitFinder():
 
             for i in it:
                 index = my_indices[i]
-                frame[:]   = np.squeeze(data_dset[index]).astype(float)
-                bad_pix[:] = np.squeeze(mask_dset[index]) != 0
+                frame[:] = data_dset[index]
+                bad_pix[:] = (mask_dset[index] != 0)
 
                 # corrected jungfrau has weird values
                 bad_pix[~np.isfinite(frame)] = True
+                frame[bad_pix] = 0
 
                 # photon conversion
                 frame = np.clip(np.round(frame/ADU_PER_PHOTON-0.3).astype('i4'), 0, None)
-                frame[bad_pix] = 0
 
                 # determine threshold
                 percentile_threshold = np.percentile(frame, STREAK_PTHRESHOLD)
@@ -142,7 +145,7 @@ class StreakHitFinder():
         if lock.acquire() :
             with h5py.File(self.output_fname, 'a') as f:
                 st = my_indices.min()
-                en = my_indices.max()
+                en = my_indices.max() + 1
                 g = f['entry_1']
                 g['litpixels'][st:en]    = litpixels
                 g['total_intens'][st:en] = total_intens
@@ -156,6 +159,18 @@ class StreakHitFinder():
             print(f'rank {rank} done')
             sys.stdout.flush()
             lock.release()
+
+    @staticmethod
+    def copy_ids(vds_fname, fptr):
+        print('Copying IDs from VDS file')
+        sys.stdout.flush()
+
+        if 'entry_1/trainId' in fptr: del fptr['entry_1/trainId']
+        if 'entry_1/cellId' in fptr: del fptr['entry_1/cellId']
+
+        with h5py.File(vds_fname, 'r') as f_vds:
+            fptr['entry_1/trainId'] = f_vds['entry_1/trainId'][:]
+            fptr['entry_1/cellId'] = f_vds['entry_1/cellId'][:]
 
 def main():
     import argparse
