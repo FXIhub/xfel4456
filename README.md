@@ -37,8 +37,9 @@ Put any analysis files (bigger than a few megabytes) in /scratch:
       /streaks                 Dataset {6066}
       /total_intens            Dataset {6066}
       ```
-- [ ] Generate streakogram, and virtual powder from above
-    - I hear that Ivan is working on this.
+- [x] Generate streakogram, and virtual powder from above
+    - Example ```python offline/streaks_powder_plotter.py -e  "/gpfs/exfel/u/scratch/SPB/202302/p004456/events/events_r0040.h5" -g "/gpfs/exfel/exp/XMPL/201750/p700000/proc/r0040/j4m-p2805_v03.geom"```
+    will create `events_r0040.streaks_powder_plot.png` and `events_r0040.streakogram_plot.png` in folder `/gpfs/exfel/u/scratch/SPB/202302/p004456/events/`
 - [ ] Save hits to cxi file
 - [x] Write cxi file from scan runs, for the purpose of speckle-tracking
     - It seems Margarita already has a means of streaming scan data, with a modified scan log, to the ST software. It would be nice to include this code here.
