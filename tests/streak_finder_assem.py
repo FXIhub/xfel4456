@@ -1,30 +1,24 @@
 '''
 streak finding for the assembled image from JUNGFRAU detector.
-
-
 '''
 
 import argparse
+PREFIX      = '/gpfs/exfel/exp/SPB/202302/p004456/'
+geom_file = '/gpfs/exfel/exp/XMPL/201750/p700000/proc/r0040/j4m-p2805_v03.geom'
 
-# DATA_PATH   = 'entry_1/instrument_1/detector_1/data'
-# MASK_PATH   = 'entry_1/instrument_1/detector_1/mask'
-#
-# parser = argparse.ArgumentParser(description='Find streaks and output list to scratch/events/events_r<run>.h5. Requires processed data and vds file.')
-# parser.add_argument('run', type=int, help='Run number')
-# parser.add_argument('-a', '--ADU_per_photon',
-#                     help='ADUs per photon, for proc/ data the adus are in units of keV',
-#                     type=float)
-# parser.add_argument('--percentile_threshold',
-#                     help='determines the threshold value for streak finding',
-#                     type=float, default = 99.5 )
-# parser.add_argument('--min_pix',
-#                     help='determines the minimum number of connected pixels for a streak',
-#                     type=int, default = 15 )
-#
-# args = parser.parse_args()
-#
-# args.vds_file         = PREFIX+'scratch/vds/r%.4d.cxi' %args.run
-# args.output_file      = PREFIX+'scratch/events/events_r%.4d.h5'%args.run
+proposal = 700000
+parser = argparse.ArgumentParser(description='Find streaks in assembled image and output list to scratch/peak_info/run<run>.h5.')
+parser.add_argument('--run', type=int, help='Run number', required=True)
+parser.add_argument('--thld', type= int, help='litpixel threshold', default=10)
+parser.add_argument('--min_pix', type=int,help='minimum connected pixels for a streak', default = 5)
+parser.add_argument('--max_pix', type=int, help='Maximum pixels', default=10000)
+parser.add_argument('--min_peak', type=int, help='Minimum peak',default=5 )
+parser.add_argument('--mask_file', type=str, help='Mask file path', default='None')
+parser.add_argument('--Region', type=str, help='Region: "ALL/Q/C" ', default='ALL')
+
+args = parser.parse_args()
+
+args.output_file      = PREFIX+'scratch/peak_info/run%.4d.h5'%args.run
 
 
 import sys,os
@@ -39,51 +33,45 @@ from hit_finding_utils import single_streak_finder
 import multiprocessing as mp
 import pickle as pk
 from skimage import measure, morphology, feature
-
-PREFIX      = '/gpfs/exfel/exp/SPB/202302/p004456/'
-proposal = 700000
-run_id = 39
-geom_file = '/gpfs/exfel/exp/XMPL/201750/p700000/proc/r0040/j4m-p2805_v03.geom'
-train_img_dict = CBD_ut.read_train(proposal,run_id,0,\
+train_img_dict = CBD_ut.read_train(proposal,args.run,0,\
 geom_file=geom_file,geom_assem='True',ROI=(0,2400,0,2400))
 no_trains = train_img_dict['no_trains']
 IMG_SHAPE = train_img_dict['adc_img'].shape[1:]
 
 n_procs = mp.cpu_count()
 chunk_size = int(np.ceil(no_trains/n_procs))
-thld = 10
-min_pix = 5
-max_pix = 10000
-min_peak = 5
-mask_file='None'
-Region='ALL'
+
 
 print('setup done!')
 def worker(rank,no_trains):
     # intialise output flie
-    output_log_file = PREFIX + f'/scratch/usr/Shared/cli/run_{run_id:d}_log_worker{rank:d}.txt'
-    output_pickle_file = PREFIX + f'/scratch/usr/Shared/cli/run_{run_id:d}_peak_info_worker{rank:d}.pkl'
-    output_evt_lst_file = PREFIX + f'/scratch/usr/Shared/cli/run_{run_id:d}_evt_lst_worker{rank:d}.txt'
-    if os.path.exists(output_log_file):
-        print('Deleting existing log file:', output_log_file)
-        os.remove(output_log_file)
+    output_log_file = PREFIX + f'/scratch/usr/Shared/butolama/run_{args.run:d}_log_worker{rank:d}.txt'
+    output_pickle_file = PREFIX + f'/scratch/usr/Shared/butolama/run_{args.run:d}_peak_info_worker{rank:d}.pkl'
+    output_evt_lst_file = PREFIX + f'/scratch/usr/Shared/butolama/run_{args.run:d}_evt_lst_worker{rank:d}.txt'
+       
+        
+    for file_path in [output_log_file, output_pickle_file, output_evt_lst_file]:
+        if os.path.exists(file_path):
+            print(f'Deleting existing file: {file_path}')
+            os.remove(file_path)
 
-    if os.path.exists(output_pickle_file):
-        print('Deleting existing pkl file:', output_pickle_file)
-        os.remove(output_pickle_file)
+    worker_frame_id_lst = np.arange(chunk_size*rank,chunk_size*(rank+1)).tolist()
+    _ = List_streak_finder(
+        rank,
+        worker_frame_id_lst,
+        output_log_file,
+        output_pickle_file,
+        output_evt_lst_file,
+        thld = args.thld,
+        min_pix=args.min_pix,
+        max_pix=args.max_pix,
+        min_peak=args.min_peak,
+        mask_file=args.mask_file,
+        Region=args.Region)
+    
+    
 
-    if os.path.exists(output_evt_lst_file):
-        print('Deleting existing event list file:', output_evt_lst_file)
-        os.remove(output_evt_lst_file)
-
-    worker_frame_id_lst = np.arange(chunk_size*rank,chunk_size*(rank+1))
-    worker_frame_id_lst = worker_frame_id_lst.tolist()
-    _ = \
-    List_streak_finder(rank,worker_frame_id_lst,output_log_file,output_pickle_file,output_evt_lst_file,\
-    thld,min_pix,max_pix,min_peak,mask_file=mask_file,Region=Region)
-
-
-def List_streak_finder(rank,frame_id_lst,output_log_file,output_pickle_file,output_evt_lst_file,thld,min_pix,max_pix,min_peak,mask_file='None',Region='ALL'):
+def List_streak_finder(rank,frame_id_lst,output_log_file,output_pickle_file,output_evt_lst_file,thld,min_pix,max_pix,min_peak,mask_file,Region):
 
     if len(frame_id_lst)==0:
         sys.exit(f'No frames found')
@@ -108,7 +96,7 @@ def List_streak_finder(rank,frame_id_lst,output_log_file,output_pickle_file,outp
         sys.exit('Check the Region option: ALL,Q,C')
 
     if mask_file!='None':
-        mask_file=os.path.abspath(mask_file)
+        mask_file=os.path.abspath(args.mask_file)
         m=h5py.File(mask_file,'r')
         mask=m['/data/data'][x_min:x_max,y_min:y_max].astype(bool)
         m.close()
@@ -116,7 +104,7 @@ def List_streak_finder(rank,frame_id_lst,output_log_file,output_pickle_file,outp
         mask=np.ones((IMG_SHAPE[0],IMG_SHAPE[1])).astype(bool)
         mask=mask[x_min:x_max,y_min:y_max]
     else:
-        sys.exit('the mask file option is inproper.')
+        sys.exit('the mask file option is improper.')
     HIT_counter=0
     HIT_frame_id_list=[]
     peakXPosRaw=np.zeros((len(frame_id_lst),1024))
@@ -128,23 +116,23 @@ def List_streak_finder(rank,frame_id_lst,output_log_file,output_pickle_file,outp
     lf=open(output_log_file,'w',1)
     ef=open(output_evt_lst_file,'w',1)
 
-    lf.write(f'run : {run_id:d}, worker_rank: {rank:}')
+    lf.write(f'run : {args.run:d}, worker_rank: {rank:}')
     lf.write('\n-----------')
     lf.write('\nthld: %d\nmin_pix: %d\nmax_pix: %d\nmin_peak: %d\nmask_file: %s\nRegion: %s'%\
-    (thld,min_pix,max_pix,min_peak,mask_file,Region))
+    (args.thld,args.min_pix,args.max_pix,args.min_peak,args.mask_file,args.Region))
     lf.write('\n-----------')
 
     for event_no in range(len(frame_id_lst)):
         frame_id = frame_id_lst[event_no]
         bkg = 0
 
-        train_img_dict = CBD_ut.read_train(proposal,run_id,frame_id,\
+        train_img_dict = CBD_ut.read_train(proposal,args.run,frame_id,\
         geom_file=geom_file,geom_assem='True',ROI=(0,2400,0,2400))
 
         img_array = train_img_dict['adc_img'][0]
 
         img_array_bgd_subtracted = img_array - bkg
-        bimg_masked = (img_array_bgd_subtracted > thld) * mask
+        bimg_masked = (img_array_bgd_subtracted > args.thld) * mask
 
         all_labels = measure.label(bimg_masked, connectivity=1)
         # all_labels=measure.label(bimg_masked,connectivity=1) #connectivity is important here, for sim data,use 2, for exp data use 1
@@ -157,10 +145,10 @@ def List_streak_finder(rank,frame_id_lst,output_log_file,output_pickle_file,outp
         label = np.array([r.label for r in props]).reshape(
             -1,
         )
-        #     label_filtered=label[(area>min_pix)*(area<5e8)*(aspect_ratio>2)]
-        label_filtered = label[(area > min_pix) * (area < max_pix)]
-        #     area_filtered=area[(area>min_pix)*(area<5e8)*(aspect_ratio>2)]
-        area_filtered = area[(area > min_pix) * (area < max_pix)]
+        #     label_filtered=label[(area>args.min_pix)*(area<5e8)*(aspect_ratio>2)]
+        label_filtered = label[(area > args.min_pix) * (area < args.max_pix)]
+        #     area_filtered=area[(area>args.min_pix)*(area<5e8)*(aspect_ratio>2)]
+        area_filtered = area[(area > args.min_pix) * (area < args.max_pix)]
         area_sort_ind = np.argsort(area_filtered)[::-1]
         label_filtered_sorted = label_filtered[area_sort_ind]
 
@@ -190,7 +178,7 @@ def List_streak_finder(rank,frame_id_lst,output_log_file,output_pickle_file,outp
             peakYPosRaw[event_no,:nPeaks[event_no]]=weighted_centroid_filtered[:nPeaks[event_no],1]+y_min
 
 
-        if (peak_no>=min_peak) and (peak_no<=1024):
+        if (peak_no>=args.min_peak) and (peak_no<=1024):
             HIT_counter+=1
             HIT_frame_id_list.append(frame_id)
 
@@ -209,7 +197,7 @@ def List_streak_finder(rank,frame_id_lst,output_log_file,output_pickle_file,outp
     pf=open(output_pickle_file,'wb')
     pk.dump(peak_list_dict,pf)
     pf.close()
-    print(f'run: {run_id:d}\n')
+    print(f'run: {args.run:d}\n')
     print(f'frame_id: \n')
     print(frame_id_lst)
     print('%d   out of  %d  hits found!'%(HIT_counter,len(frame_id_lst)))
