@@ -35,6 +35,9 @@ geom_file='/gpfs/exfel/exp/XMPL/201750/p700000/proc/r0040/j4m-p2805_v03.geom',ge
     sel_img = run.select([('SPB_IRDA_JF4M/DET/JNGFR*:daqOutput', 'data.adc'),\
                             ('SPB_IRDA_JF4M/DET/JNGFR*:daqOutput', 'data.gain'),\
                             ('SPB_IRDA_JF4M/DET/JNGFR*:daqOutput', 'data.mask')])
+
+    no_trains = sel_img['SPB_IRDA_JF4M/DET/JNGFR01:daqOutput']['data.adc'].shape[0]
+
     tid, train_data = sel_img.train_from_index(train_ind)
     module_data_adc =extra_data.stack_detector_data(train_data,'data.adc',axis=-3,modules=8,starts_at=1,pattern=r'/DET/JNGFR(\d+)')
     module_data_gain =extra_data.stack_detector_data(train_data,'data.gain',axis=-3,modules=8,starts_at=1,pattern=r'SPB_IRDA_JF4M/DET/JNGFR(\d+)')
@@ -44,7 +47,7 @@ geom_file='/gpfs/exfel/exp/XMPL/201750/p700000/proc/r0040/j4m-p2805_v03.geom',ge
     mask = module_data_mask
 
     train_img_dict=\
-    {'run_id':run_id,'train_index':train_ind,'train_id':tid,\
+    {'run_id':run_id,'no_trains':no_trains,'train_index':train_ind,'train_id':tid,\
     'module_data_adc':module_data_adc,'module_data_gain':module_data_gain,\
     'module_data_mask':module_data_mask,'geometry_file':geom_file}
     if geom_assem=='False':
@@ -63,7 +66,7 @@ geom_file='/gpfs/exfel/exp/XMPL/201750/p700000/proc/r0040/j4m-p2805_v03.geom',ge
         mask_img, center = geom.position_modules(mask)
         mask_img[np.where(np.isnan(mask_img))] = 0
         mask_img[np.where(np.isinf(mask_img))] = 0
-        
+
         #3D slicing
         train_img_dict['adc_img'] = adc_img[:,ROI[0]:ROI[1],ROI[2]:ROI[3]]
         train_img_dict['gain_img'] = gain_img[:,ROI[0]:ROI[1],ROI[2]:ROI[3]]
@@ -81,14 +84,14 @@ def get_3d_stack_from_train_ind(proposal,run_id,train_ind_tuple=(0,50,1),\
 geom_file='/gpfs/exfel/exp/XMPL/201750/p700000/proc/r0040/j4m-p2805_v03.geom',geom_assem='False',ROI=(0,2400,0,2400)):
 
     train_ind_arry = np.arange(train_ind_tuple[0],train_ind_tuple[1],train_ind_tuple[2])
-# list is faster to read in the data (compared with previous ndarray concatenation)  
+# list is faster to read in the data (compared with previous ndarray concatenation)
     stack_arry_module_adc = []
     stack_arry_module_gain = []
     stack_arry_module_mask = []
     stack_arry_img_adc = []
     stack_arry_img_gain = []
     stack_arry_img_mask = []
-    
+
     for m in range(train_ind_arry.shape[0]):
         train_ind = train_ind_arry[m]
         train_img_dict = read_train(proposal,run_id,train_ind,geom_file=geom_file,geom_assem=geom_assem,ROI=ROI)
@@ -98,8 +101,8 @@ geom_file='/gpfs/exfel/exp/XMPL/201750/p700000/proc/r0040/j4m-p2805_v03.geom',ge
         if geom_assem=='True':
             stack_arry_img_adc.append(train_img_dict['adc_img'])
             stack_arry_img_gain.append(train_img_dict['gain_img'])
-            stack_arry_img_mask.append(train_img_dict['mask_img'])            
-        
+            stack_arry_img_mask.append(train_img_dict['mask_img'])
+
     stack_arry_dict = dict()
     stack_arry_dict['stack_arry_module_adc'] = stack_arry_module_adc
     stack_arry_dict['stack_arry_module_gain'] = stack_arry_module_gain
