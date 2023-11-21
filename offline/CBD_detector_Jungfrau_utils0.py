@@ -18,12 +18,12 @@ Nikolay Ivanov                       nikolay.ivanov@desy.de
 from extra_data import open_run
 import h5py
 import numpy as np
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import extra_data
-from extra_data import stack_detector_data
+#from extra_data import stack_detector_data
 from extra_geom import JUNGFRAUGeometry
-import glob
-import sys
+#import glob
+#import sys
 
 def read_train(proposal,run_id,train_ind,\
 geom_file='/gpfs/exfel/exp/XMPL/201750/p700000/proc/r0040/j4m-p2805_v03.geom',geom_assem='False',ROI=(0,2400,0,2400)):
@@ -53,7 +53,7 @@ geom_file='/gpfs/exfel/exp/XMPL/201750/p700000/proc/r0040/j4m-p2805_v03.geom',ge
     'module_data_mask':module_data_mask,'geometry_file':geom_file}
     if geom_assem=='False':
         return train_img_dict
-    elif geom_assem=='True':
+    if geom_assem=='True':
         geom = JUNGFRAUGeometry.from_crystfel_geom(geom_file)
 
         adc_img, center = geom.position_modules(adc)
@@ -74,10 +74,8 @@ geom_file='/gpfs/exfel/exp/XMPL/201750/p700000/proc/r0040/j4m-p2805_v03.geom',ge
         train_img_dict['mask_img'] = mask_img[:,ROI[0]:ROI[1],ROI[2]:ROI[3]]
         train_img_dict['ROI'] = ROI
         return train_img_dict
-    else:
-        sys.error('check the geom_assem argument!')
-        return None
 
+    raise Exception('check the geom_assem argument!')
 
 
 
@@ -120,29 +118,24 @@ geom_file='/gpfs/exfel/exp/XMPL/201750/p700000/proc/r0040/j4m-p2805_v03.geom',ge
 
 
 def JungFrau_mask_maker(assembled_data,thres_mean=60,thres_sigma=2):
+    data = assembled_data
+    data_mean = np.mean(data,axis=0)
+    data_sigma = np.std(data,axis=0)
 
-        data = assembled_data
-        data_mean = np.mean(data,axis=0)
-        data_sigma = np.std(data,axis=0)
+    mask = np.zeros(data.shape[1:])
 
-        mask = np.zeros(data.shape[1:])
+    mask[np.where(data_mean>thres_mean)] = 1
+    mask[np.where(data_sigma>thres_sigma)] = 1
+    mask_nan = np.logical_not(np.isnan(data_mean))
+    mask_inf = np.logical_not(np.isinf(data_mean))
 
-        mask[np.where(data_mean>thres_mean)] = 1
-        mask[np.where(data_sigma>thres_sigma)] = 1
-        mask_nan = np.logical_not(np.isnan(data_mean))
-        mask_inf = np.logical_not(np.isinf(data_mean))
+    mask = np.logical_not(mask)
+    mask = mask*mask_nan*mask_inf
 
-        mask = np.logical_not(mask)
-        mask = mask*mask_nan*mask_inf
+    #mask = np.logical_not(mask)
 
-        #mask = np.logical_not(mask)
-
-        #stack_arry_dict['stack_arry_img_mask_updated'] = mask
-        
-        # output a h5 file
-        file_name = 'mask.h5'
-        with h5py.File(file_name,'w') as df:
-            df.create_dataset('/entry_1/goodpixels',data=mask.astype('bool'))
-            
-
-        return mask
+    #output a h5 file
+    file_name = 'mask.h5'
+    with h5py.File(file_name,'w') as df:
+        df.create_dataset('/entry_1/goodpixels',data=mask.astype('bool'))
+    return mask
