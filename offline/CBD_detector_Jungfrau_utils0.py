@@ -137,5 +137,11 @@ def JungFrau_mask_maker(assembled_data,thres_mean=60,thres_sigma=2):
         #mask = np.logical_not(mask)
 
         stack_arry_dict['stack_arry_img_mask_updated'] = mask
+        
+        # output a h5 file
+        file_name = 'mask.h5'
+        with h5fy.File(file_name,'w') as df:
+            df.create_dataset('/entry_1/goodpixels',data=mask)
+            
 
         return mask
