@@ -10,6 +10,8 @@ python mask_comb.py <mask_file_1> .....<mask_file_n>
 import sys,os
 import h5py
 import glob
+import numpy as np
+import matplotib.pyplot as plt
 # import h5plugin
 
 def find_h5paths(mask_file):
