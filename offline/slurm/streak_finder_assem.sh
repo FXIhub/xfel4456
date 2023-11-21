@@ -2,8 +2,8 @@
 
 #SBATCH --array=39
 #SBATCH --time=4:00:00
-#SBATCH --partition=upex
-##SBATCH --reservation=upex_004456
+#SBATCH --partition=upex-beamtime
+#SBATCH --reservation=upex_004456
 #SBATCH --export=ALL
 #SBATCH -J streak_finder_assemble
 #SBATCH --output=slog/%j.out
@@ -22,6 +22,6 @@ MIN_PEAK=5
 MASK_FILE="None"
 REGION="ALL"
 
-python ${PREFIX}/streak_finder_assem.py --run  ${SLURM_ARRAY_TASK_ID} --thld ${THRESHOLD} --min_pix ${MIN_PIX} --max_pix ${MAX_PIX} --min_peak ${MIN_PEAK} --mask_file ${MASK_FILE} --Region ${REGION}  
+python ${PREFIX}/streak_finder_assem.py --run  ${SLURM_ARRAY_TASK_ID} --thld ${THRESHOLD} --min_pix ${MIN_PIX} --max_pix ${MAX_PIX} --min_peak ${MIN_PEAK} --mask_file ${MASK_FILE} --region ${REGION}  
 
 

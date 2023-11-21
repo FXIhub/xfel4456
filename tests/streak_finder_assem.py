@@ -14,7 +14,7 @@ parser.add_argument('--min_pix', type=int,help='minimum connected pixels for a s
 parser.add_argument('--max_pix', type=int, help='Maximum pixels', default=10000)
 parser.add_argument('--min_peak', type=int, help='Minimum peak',default=5 )
 parser.add_argument('--mask_file', type=str, help='Mask file path', default='None')
-parser.add_argument('--Region', type=str, help='Region: "ALL/Q/C" ', default='ALL')
+parser.add_argument('--region', type=str, help='Region: "ALL/Q/C" ', default='ALL')
 
 args = parser.parse_args()
 
@@ -67,11 +67,11 @@ def worker(rank,no_trains):
         max_pix=args.max_pix,
         min_peak=args.min_peak,
         mask_file=args.mask_file,
-        Region=args.Region)
+        region=args.region)
     
     
 
-def List_streak_finder(rank,frame_id_lst,output_log_file,output_pickle_file,output_evt_lst_file,thld,min_pix,max_pix,min_peak,mask_file,Region):
+def List_streak_finder(rank,frame_id_lst,output_log_file,output_pickle_file,output_evt_lst_file,thld,min_pix,max_pix,min_peak,mask_file,region):
 
     if len(frame_id_lst)==0:
         sys.exit(f'No frames found')
@@ -119,7 +119,7 @@ def List_streak_finder(rank,frame_id_lst,output_log_file,output_pickle_file,outp
     lf.write(f'run : {args.run:d}, worker_rank: {rank:}')
     lf.write('\n-----------')
     lf.write('\nthld: %d\nmin_pix: %d\nmax_pix: %d\nmin_peak: %d\nmask_file: %s\nRegion: %s'%\
-    (args.thld,args.min_pix,args.max_pix,args.min_peak,args.mask_file,args.Region))
+    (thld,min_pix,max_pix,min_peak,mask_file,region))
     lf.write('\n-----------')
 
     for event_no in range(len(frame_id_lst)):
@@ -132,7 +132,7 @@ def List_streak_finder(rank,frame_id_lst,output_log_file,output_pickle_file,outp
         img_array = train_img_dict['adc_img'][0]
 
         img_array_bgd_subtracted = img_array - bkg
-        bimg_masked = (img_array_bgd_subtracted > args.thld) * mask
+        bimg_masked = (img_array_bgd_subtracted > thld) * mask
 
         all_labels = measure.label(bimg_masked, connectivity=1)
         # all_labels=measure.label(bimg_masked,connectivity=1) #connectivity is important here, for sim data,use 2, for exp data use 1
@@ -146,9 +146,9 @@ def List_streak_finder(rank,frame_id_lst,output_log_file,output_pickle_file,outp
             -1,
         )
         #     label_filtered=label[(area>args.min_pix)*(area<5e8)*(aspect_ratio>2)]
-        label_filtered = label[(area > args.min_pix) * (area < args.max_pix)]
+        label_filtered = label[(area > min_pix) * (area < max_pix)]
         #     area_filtered=area[(area>args.min_pix)*(area<5e8)*(aspect_ratio>2)]
-        area_filtered = area[(area > args.min_pix) * (area < args.max_pix)]
+        area_filtered = area[(area > min_pix) * (area < max_pix)]
         area_sort_ind = np.argsort(area_filtered)[::-1]
         label_filtered_sorted = label_filtered[area_sort_ind]
 
