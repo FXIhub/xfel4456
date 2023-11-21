@@ -11,7 +11,7 @@ import sys,os
 import h5py
 import glob
 import numpy as np
-import matplotib.pyplot as plt
+import matplotlib.pyplot as plt
 # import h5plugin
 
 def find_h5paths(mask_file):
