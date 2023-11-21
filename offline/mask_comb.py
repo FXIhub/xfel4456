@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 
 def find_h5paths(mask_file):
     mask_h5path = []
-    possible_paths = [f'/entry_1/goodpixels',f'/data/data',f'/data/mask',f'/mask/data'] # can be modified
+    possible_paths = [f'/entry_1/goodpixels',f'/data/mask',f'/mask/data',f'/data/data'] # can be modified
     with h5py.File(mask_file,'r') as m:
         for h5path_candidate in possible_paths:
             if h5path_candidate in m:
@@ -46,7 +46,7 @@ if __name__=='__main__':
             else:
                 mask_h5path = mask_h5path[0]
                 with h5py.File(file_name,'r') as m:
-                    mask = np.array(m[mask_h5path])
+                    mask = np.array(m[mask_h5path]).astype(np.int8)
                 mask_comb = mask
                 MASK_SHAPE = mask.shape
         else:
@@ -56,15 +56,15 @@ if __name__=='__main__':
             else:
                 mask_h5path = mask_h5path[0]
                 with h5py.File(file_name,'r') as m:
-                    mask = np.array(m[mask_h5path])
+                    mask = np.array(m[mask_h5path]).astype(np.int8)
                 if mask.shape!=MASK_SHAPE:
                     sys.error(f'mask image shape not match, \n{file_name:s}')
                 mask_comb *= mask
+    mask_comb = mask_comb.astype('bool')
+    with h5py.File(out_file_name,'w') as df:
+        df.create_dataset('/entry_1/goodpixels',data=mask_comb)
 
-            with h5py.File(out_file_name,'w') as df:
-                df.create_dataset('/entry_1/goodpixels',data=mask.asytpe('bool'))
 
-
-    plt.figure(fig_size=(5,5))
+    plt.figure(figsize=(5,5))
     plt.imshow(mask_comb,vmin=0,vmax=1)
     plt.savefig(out_file_name[0:-3]+'.png')
