@@ -23,6 +23,7 @@ import extra_data
 from extra_data import stack_detector_data
 from extra_geom import JUNGFRAUGeometry
 import glob
+import sys
 
 def read_train(proposal,run_id,train_ind,\
 geom_file='/gpfs/exfel/exp/XMPL/201750/p700000/proc/r0040/j4m-p2805_v03.geom',geom_assem='False',ROI=(0,2400,0,2400)):
@@ -103,7 +104,7 @@ geom_file='/gpfs/exfel/exp/XMPL/201750/p700000/proc/r0040/j4m-p2805_v03.geom',ge
             stack_arry_img_gain.append(train_img_dict['gain_img'])
             stack_arry_img_mask.append(train_img_dict['mask_img'])
 
-    stack_arry_dict = dict()
+    stack_arry_dict = {}
     stack_arry_dict['stack_arry_module_adc'] = stack_arry_module_adc
     stack_arry_dict['stack_arry_module_gain'] = stack_arry_module_gain
     stack_arry_dict['stack_arry_module_mask'] = stack_arry_module_mask
@@ -136,12 +137,12 @@ def JungFrau_mask_maker(assembled_data,thres_mean=60,thres_sigma=2):
 
         #mask = np.logical_not(mask)
 
-        stack_arry_dict['stack_arry_img_mask_updated'] = mask
+        #stack_arry_dict['stack_arry_img_mask_updated'] = mask
         
         # output a h5 file
         file_name = 'mask.h5'
-        with h5fy.File(file_name,'w') as df:
-            df.create_dataset('/entry_1/goodpixels',data=mask)
+        with h5py.File(file_name,'w') as df:
+            df.create_dataset('/entry_1/goodpixels',data=mask.astype('bool'))
             
 
         return mask
