@@ -42,7 +42,7 @@ if __name__=='__main__':
         if ind==0:
             mask_h5path = find_h5paths(file_name)
             if len(mask_h5path)==0:
-                sys.error(f'check the mask h5 data path for: \n{file_name:s}')
+                sys.exit(f'check the mask h5 data path for: \n{file_name:s}')
             else:
                 mask_h5path = mask_h5path[0]
                 with h5py.File(file_name,'r') as m:
@@ -52,13 +52,13 @@ if __name__=='__main__':
         else:
             mask_h5path = find_h5paths(file_name)
             if len(mask_h5path)==0:
-                sys.error(f'check the mask h5 data path for: \n{file_name:s}')
+                sys.exit(f'check the mask h5 data path for: \n{file_name:s}')
             else:
                 mask_h5path = mask_h5path[0]
                 with h5py.File(file_name,'r') as m:
                     mask = np.array(m[mask_h5path]).astype(np.int8)
                 if mask.shape!=MASK_SHAPE:
-                    sys.error(f'mask image shape not match, \n{file_name:s}')
+                    sys.exit(f'mask image shape not match, \n{file_name:s}')
                 mask_comb *= mask
     mask_comb = mask_comb.astype('bool')
     with h5py.File(out_file_name,'w') as df:
