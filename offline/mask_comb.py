@@ -61,7 +61,7 @@ if __name__=='__main__':
                     sys.error(f'mask image shape not match, \n{file_name:s}')
                 mask_comb *= mask
 
-            with h5fy.File(out_file_name,'w') as df:
+            with h5py.File(out_file_name,'w') as df:
                 df.create_dataset('/entry_1/goodpixels',data=mask.asytpe('bool'))
 
 
