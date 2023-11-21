@@ -15,7 +15,7 @@ import glob
 def find_h5paths(mask_file):
     mask_h5path = []
     possible_paths = [f'/entry_1/goodpixels',f'/data/data',f'/data/mask',f'/mask/data'] # can be modified
-    with h5py.File(mask_file1,'r') as m:
+    with h5py.File(mask_file,'r') as m:
         for h5path_candidate in possible_paths:
             if h5path_candidate in m:
                 mask_h5path.append(h5path_candidate)
