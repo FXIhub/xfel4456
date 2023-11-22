@@ -68,7 +68,7 @@ def worker(rank,no_trains):
         max_pix=args.max_pix,
         min_peak=args.min_peak,
         mask_file=args.mask_file,
-        bgk_file = args.bkg_file,
+        bkg_file = args.bkg_file,
         region=args.region)
 
 
