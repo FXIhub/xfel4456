@@ -26,6 +26,7 @@ import sys,os
 sys.path.append(os.path.dirname(os.path.dirname(__file__))+'/offline')
 import numpy as np
 import h5py
+from extra_geom import JUNGFRAUGeometry
 import CBD_detector_Jungfrau_utils0 as CBD_ut
 from tqdm import tqdm
 import time
@@ -100,10 +101,11 @@ def List_streak_finder(rank,frame_id_lst,output_log_file,output_pickle_file,outp
     if mask_file!='None':
         mask_file=os.path.abspath(args.mask_file)
         m=h5py.File(mask_file,'r')
-        mask=m['/entry_1/goodpixels'][x_min:x_max,y_min:y_max].astype(bool)
+        mask=m['/entry_1/goodpixels'].astype(bool)
         m.close()
         geom = JUNGFRAUGeometry.from_crystfel_geom(geom_file)
         mask, center = geom.position_modules_fast(mask) ### to assmeble the mask from geometry
+        mask = mask[x_min:x_max,y_min:y_max]
     elif mask_file=='None':
         mask=np.ones((IMG_SHAPE[0],IMG_SHAPE[1])).astype(bool)
         mask=mask[x_min:x_max,y_min:y_max]
@@ -114,10 +116,11 @@ def List_streak_finder(rank,frame_id_lst,output_log_file,output_pickle_file,outp
     if bkg_file!='None':
         bkg_file=os.path.abspath(args.bkg_file)
         b=h5py.File(bkg_file,'r')
-        bkg=b['/entry_1/data/white_field'][x_min:x_max,y_min:y_max]
+        bkg=b['/entry_1/data/white_field']
         b.close()
         geom = JUNGFRAUGeometry.from_crystfel_geom(geom_file)
         bkg, center = geom.position_modules_fast(bkg)
+        bkg = bkg[x_min:x_max,y_min:y_max]
     elif bkg_file=='None':
         bkg = 0
     else:
