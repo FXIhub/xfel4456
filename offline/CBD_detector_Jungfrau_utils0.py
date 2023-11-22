@@ -169,9 +169,9 @@ def make_white_field_mask(proposal,run_id,thres_mean = 1e4,thres_sigma = 1e4,geo
     mask_nan = np.logical_not(np.isnan(data_mean))
     mask_inf = np.logical_not(np.isinf(data_mean))
     mask = mask*mask_nan*mask_inf
-    mean_img = mean_img.astype(np.int64)
+    data_mean = data_mean.astype(np.int64)
     with h5py.File(f"white_field_run_{run_id:d}.h5",'w') as wf:
-        wf.create_dataset('/entry_1/data/white_field',data=mean_img)
+        wf.create_dataset('/entry_1/data/white_field',data=data_mean)
 
     file_name = f'mask_run{run_id:d}.h5'
     with h5py.File(file_name,'w') as df:
