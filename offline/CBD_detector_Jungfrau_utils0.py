@@ -14,7 +14,10 @@ Ivan De Gennaro Aquino               ivan.de.gennaro.aquino@desy.de
 Andrew Morgan                        morganaj@unimelb.edu.au
 Nikolay Ivanov                       nikolay.ivanov@desy.de
 '''
+import sys,os
+import matplotlib.pyplot as plt
 
+import h5py
 from extra_data import open_run
 import h5py
 import numpy as np
@@ -139,3 +142,40 @@ def JungFrau_mask_maker(assembled_data,thres_mean=60,thres_sigma=2):
     with h5py.File(file_name,'w') as df:
         df.create_dataset('/entry_1/goodpixels',data=mask.astype('bool'))
     return mask
+
+
+def make_white_field_mask(proposal,run_id,thres_mean = 1e4,thres_sigma = 1e4):
+
+
+    train_img_dict = read_train(proposal,run_id,0,\
+    geom_file='/gpfs/exfel/exp/XMPL/201750/p700000/proc/r0040/j4m-p2805_v03.geom',\
+           geom_assem='False',ROI=(0,2400,0,2400))
+    no_trains = train_img_dict['no_trains']
+    stride = int(no_trains//100)
+    print(f'{no_trains:d}  trains')
+    stack_arry_dict = CBD_ut.get_3d_stack_from_train_ind(proposal,run_id,train_ind_tuple=(0,no_trains,stride),\
+    geom_file='/gpfs/exfel/exp/XMPL/201750/p700000/proc/r0040/j4m-p2805_v03.geom',\
+                            geom_assem='False',ROI=(0,2400,0,2400))
+
+
+
+    data = stack_arry
+    data_mean = np.mean(data,axis=0)
+    data_sigma = np.std(data,axis=0)
+
+    mask = np.ones(data.shape[1:])
+
+    mask[np.where(data_mean>thres_mean)] = 0
+    mask[np.where(data_sigma>thres_sigma)] = 0
+    mask_nan = np.logical_not(np.isnan(data_mean))
+    mask_inf = np.logical_not(np.isinf(data_mean))
+    mask = mask*mask_nan*mask_inf
+    mean_img = mean_img.astype(np.int64)
+    with h5py.File(f"white_field_run_{run_id:d}.h5",'w') as wf:
+        wf.create_dataset('/entry_1/data/white_field',data=mean_img)
+
+    file_name = f'mask_run{run_id:d}.h5'
+    with h5py.File(file_name,'w') as df:
+        df.create_dataset('/entry_1/goodpixels',data=mask.astype('bool'))
+
+    return
