@@ -20,8 +20,7 @@ MIN_PIX=5
 MAX_PIX=1000
 MIN_PEAK=5
 MASK_FILE="None"
+BKG_FILE="None"
 REGION="ALL"
 
-python ${PREFIX}/streak_finder_assem.py --run  ${SLURM_ARRAY_TASK_ID} --thld ${THRESHOLD} --min_pix ${MIN_PIX} --max_pix ${MAX_PIX} --min_peak ${MIN_PEAK} --mask_file ${MASK_FILE} --region ${REGION}  
-
-
+python ${PREFIX}/streak_finder_assem.py --run  ${SLURM_ARRAY_TASK_ID} --thld ${THRESHOLD} --min_pix ${MIN_PIX} --max_pix ${MAX_PIX} --min_peak ${MIN_PEAK} --mask_file ${MASK_FILE} --bkg_file ${BKG_FILE} --region ${REGION}
