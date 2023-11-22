@@ -144,21 +144,20 @@ def JungFrau_mask_maker(assembled_data,thres_mean=60,thres_sigma=2):
     return mask
 
 
-def make_white_field_mask(proposal,run_id,thres_mean = 1e4,thres_sigma = 1e4):
+def make_white_field_mask(proposal,run_id,thres_mean = 1e4,thres_sigma = 1e4,geom_file='/gpfs/exfel/exp/XMPL/201750/p700000/proc/r0040/j4m-p2805_v03.geom'):
 
 
     train_img_dict = read_train(proposal,run_id,0,\
-    geom_file='/gpfs/exfel/exp/XMPL/201750/p700000/proc/r0040/j4m-p2805_v03.geom',\
+    geom_file=geom_file,\
            geom_assem='False',ROI=(0,2400,0,2400))
     no_trains = train_img_dict['no_trains']
     stride = int(no_trains//100)
     print(f'{no_trains:d}  trains')
     stack_arry_dict = get_3d_stack_from_train_ind(proposal,run_id,train_ind_tuple=(0,no_trains,stride),\
-    geom_file='/gpfs/exfel/exp/XMPL/201750/p700000/proc/r0040/j4m-p2805_v03.geom',\
-                            geom_assem='False',ROI=(0,2400,0,2400))
+    geom_file=geom_file,geom_assem='False',ROI=(0,2400,0,2400))
 
-
-
+    stack_arry = np.array(stack_arry_dict['stack_arry_module_adc'])
+    stack_arry = stack_arry[:,0,:,:]
     data = stack_arry
     data_mean = np.mean(data,axis=0)
     data_sigma = np.std(data,axis=0)
