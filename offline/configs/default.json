@@ -1,0 +1,22 @@
+{
+    "data_type": "proc",
+    "geom_path": "/gpfs/exfel/exp/SPB/202302/p004456/usr/geometry/geom_v5.geom",
+    "modules": 8,
+    "pattern": "SPB_IRDA_JF4M/DET/JNGFR(\\d+)",
+    "proposal": 4456,
+    "sources": [
+        [
+            "SPB_IRDA_JF4M/DET/JNGFR*:daqOutput",
+            "data.adc"
+        ],
+        [
+            "SPB_IRDA_JF4M/DET/JNGFR*:daqOutput",
+            "data.gain"
+        ],
+        [
+            "SPB_IRDA_JF4M/DET/JNGFR*:daqOutput",
+            "data.mask"
+        ]
+    ],
+    "starts_at": 1
+}
