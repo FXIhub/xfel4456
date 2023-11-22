@@ -153,7 +153,7 @@ def make_white_field_mask(proposal,run_id,thres_mean = 1e4,thres_sigma = 1e4):
     no_trains = train_img_dict['no_trains']
     stride = int(no_trains//100)
     print(f'{no_trains:d}  trains')
-    stack_arry_dict = CBD_ut.get_3d_stack_from_train_ind(proposal,run_id,train_ind_tuple=(0,no_trains,stride),\
+    stack_arry_dict = get_3d_stack_from_train_ind(proposal,run_id,train_ind_tuple=(0,no_trains,stride),\
     geom_file='/gpfs/exfel/exp/XMPL/201750/p700000/proc/r0040/j4m-p2805_v03.geom',\
                             geom_assem='False',ROI=(0,2400,0,2400))
 
