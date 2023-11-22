@@ -164,6 +164,19 @@ def make_white_field_mask(proposal,run_id,thres_mean = 1e4,thres_sigma = 1e4,geo
 
     mask = np.ones(data.shape[1:])
 
+    mrg = 2
+    mask[:,255:258,:] = 0
+    mask[:,:,255:258] = 0
+    mask[:,:,513:516] = 0
+    mask[:,:,771:774] = 0
+
+
+    mask[:,0:mrg,:] = 0
+    mask[:,-mrg:,:] = 0
+    mask[:,:,0:mrg] = 0
+    mask[:,:,-mrg:] = 0
+
+
     mask[np.where(data_mean>thres_mean)] = 0
     mask[np.where(data_sigma>thres_sigma)] = 0
     mask_nan = np.logical_not(np.isnan(data_mean))
