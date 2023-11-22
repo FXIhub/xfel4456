@@ -65,6 +65,6 @@ if __name__=='__main__':
         df.create_dataset('/entry_1/goodpixels',data=mask_comb)
 
 
-    plt.figure(figsize=(5,5))
-    plt.imshow(mask_comb,vmin=0,vmax=1)
-    plt.savefig(out_file_name[0:-3]+'.png')
+    # plt.figure(figsize=(5,5))
+    # plt.imshow(mask_comb,vmin=0,vmax=1)
+    # plt.savefig(out_file_name[0:-3]+'.png')
