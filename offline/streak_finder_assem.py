@@ -5,7 +5,8 @@ streak finding for the assembled image from JUNGFRAU detector.
 import argparse
 PREFIX      = '/gpfs/exfel/exp/SPB/202302/p004456/'
 # geom_file = '/gpfs/exfel/exp/XMPL/201750/p700000/proc/r0040/j4m-p2805_v03.geom'
-geom_file = '/gpfs/exfel/exp/SPB/202302/p004456/usr/geometry/geom_v5.geom'
+# geom_file = '/gpfs/exfel/exp/SPB/202302/p004456/usr/geometry/geom_v5.geom'
+geom_file = '/gpfs/exfel/exp/SPB/202302/p004456/scratch/yefanov/jungfrau_p3487_v2_sum.geom'
 proposal = 4456
 parser = argparse.ArgumentParser(description='Find streaks in assembled image and output list to scratch/peak_info/run<run>.h5.')
 parser.add_argument('--run', type=int, help='Run number', required=True)
