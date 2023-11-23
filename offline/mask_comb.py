@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 
 def find_h5paths(mask_file):
     mask_h5path = []
-    possible_paths = [f'/entry_1/goodpixels',f'/data/mask',f'/mask/data',f'/data/data'] # can be modified
+    possible_paths = [f'/entry_1/goodpixels',f'/entry_1/good_pixels',f'/data/mask',f'/mask/data',f'/data/data'] # can be modified
     with h5py.File(mask_file,'r') as m:
         for h5path_candidate in possible_paths:
             if h5path_candidate in m:
