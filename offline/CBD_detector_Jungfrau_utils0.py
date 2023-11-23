@@ -223,6 +223,7 @@ def make_white_field_mask(
     stack_arry = stack_arry[:, 0, :, :]
     data = stack_arry
     data_mean = np.mean(data, axis=0)
+    data_median = np.median(data, axis=0)
     data_sigma = np.std(data, axis=0)
 
     mask = np.ones(data.shape[1:])
@@ -243,9 +244,16 @@ def make_white_field_mask(
     mask_nan = np.logical_not(np.isnan(data_mean))
     mask_inf = np.logical_not(np.isinf(data_mean))
     mask = mask * mask_nan * mask_inf
-    data_mean = data_mean.astype(np.float64)
+
     with h5py.File(f"white_field_run_{run_id:d}.h5", "w") as wf:
-        wf.create_dataset("/entry_1/data/white_field", data=data_mean)
+        wf.create_dataset(
+            "/entry_1/data/white_field", data=data_mean.astype(np.float64)
+        )
+
+    with h5py.File(f"median_white_field_run_{run_id:d}.h5", "w") as wf:
+        wf.create_dataset(
+            "/entry_1/data/median_white_field", data=data_median.astype(np.float64)
+        )
 
     file_name = f"mask_run{run_id:d}.h5"
     with h5py.File(file_name, "w") as df:
