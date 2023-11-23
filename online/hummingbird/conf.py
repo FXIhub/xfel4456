@@ -27,7 +27,6 @@ state["EuXFEL/SelModule"] = None
 state["EuXFEL/MaxTrainAge"] = 4e20
 state["EuXFEL/FirstCell"] = 0
 state["EuXFEL/LastCell"] = 15
-state["running_wfs"] = None
 
 # jf1m_offsets = [(95.0, 564.0), (95.0, 17.0)]
 # jf1m_orient = [(-1, -1), (-1, -1)]
@@ -75,9 +74,18 @@ mask_h5 = ring_mask_h5 & mask_h5
 
 # background whitefield file (dividing) ------------------------------------------
 
-whitefield_file = f"{prop_dir}/usr/Shared/hummingbird/white_field_zeros.h5"
+whitefield_file = f"{prop_dir}/usr/Shared/hummingbird/white_field_run_99.h5"
 with h5py.File(whitefield_file, "r") as bgh5:
     background_data = np.array(bgh5["entry_1/data/white_field"])
+
+# zeroing this for now
+# background_data = np.zeros(geom.expected_data_shape, float)
+
+# median_whitefield_file = (
+#     f"{prop_dir}/usr/Shared/hummingbird/median_white_field_run_99.h5"
+# )
+# with h5py.File(median_whitefield_file, "r") as bgh5:
+#     median_bgd = np.array(bgh5["entry_1/data/median_white_field"])
 
 # running white field background ------------------------------------------------
 
@@ -94,7 +102,7 @@ do_streakfinding = True
 
 apply_running_background_division = False
 apply_background_division = False
-apply_background_subtraction = True  # not apply_background_division
+apply_background_subtraction = True
 
 
 if do_streakfinding:
@@ -168,19 +176,35 @@ def onEvent(evt):
         running_wfs.append(det_data)
 
         running_white_field = np.mean(running_wfs, axis=0, dtype=float)
-        running_white_field[np.isnan(running_white_field)] = 1
-        running_white_field[background_data <= 0] = 1
+        running_white_field[~np.isfinite(running_white_field)] = 1
+        running_white_field[background_data <= 1] = 1
         det_data = det_data / running_white_field
-    else:
-        if apply_background_division and not apply_background_subtraction:
-            background_data[np.isnan(background_data)] = 1
-            background_data[background_data <= 1] = 1
-            det_data = det_data / background_data
 
-        if apply_background_subtraction and not apply_background_division:
-            background_data[np.isnan(background_data)] = 0
-            background_data[background_data <= 1] = 0
-            det_data = det_data - background_data
+    if apply_background_division:
+        background_data[~np.isfinite(background_data)] = 1
+        background_data[background_data <= 1] = 1
+        det_data = det_data / background_data
+
+    if apply_background_subtraction:
+        background_data[~np.isfinite(background_data)] = 0
+        background_data[background_data <= 1] = 0
+        correction_factor = np.nansum(det_data) / np.nansum(background_data)
+        det_data = det_data - correction_factor * background_data
+
+    if not any(
+        [
+            apply_background_division,
+            apply_background_subtraction,
+            apply_running_background_division,
+        ]
+    ) or all(
+        [
+            apply_background_division,
+            apply_background_subtraction,
+            apply_running_background_division,
+        ]
+    ):
+        raise Exception("wrong operation setup, one and only one should be true")
 
     msk = (np.isfinite(det_data) & user_mask) * mask_h5
 
