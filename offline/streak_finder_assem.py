@@ -155,7 +155,11 @@ def List_streak_finder(rank,frame_id_lst,output_log_file,output_pickle_file,outp
 
         img_array = train_img_dict['adc_img'][0]
 
-        img_array_bgd_subtracted = img_array - bkg
+        img_array = img_array*mask
+        bkg = bkg*mask
+        scale_factor = np.nansum(img_arry)/np.nansum(bkg)
+
+        img_array_bgd_subtracted = img_array - scale_factor*bkg
         bimg_masked = (img_array_bgd_subtracted > thld) * mask
 
         all_labels = measure.label(bimg_masked, connectivity=1)
