@@ -1,12 +1,8 @@
 import sys
 import os
-import time
 import numpy as np
 import h5py
 import extra_geom
-import warnings
-from scipy.optimize import curve_fit
-
 from hummingbird import plotting
 from hummingbird import analysis
 from hummingbird import ipc
@@ -94,9 +90,6 @@ length_running_white_fields = 1000
 
 # operations ------------------------------------------------------------------
 
-send_hits = True
-send_powdersum = True
-send_profiles = False
 do_peakfinding = False
 do_streakfinding = True
 
@@ -152,14 +145,14 @@ if do_peakfinding:
     peaks_powder = PseudoPowderDiffraction(geom)
 
 
-if send_profiles:
-    from pyFAI.azimuthalIntegrator import AzimuthalIntegrator
+# if send_profiles:
+#     from pyFAI.azimuthalIntegrator import AzimuthalIntegrator
 
-    ai = AzimuthalIntegrator(
-        detector=geom.to_pyfai_detector(),
-        dist=clen,  # Sample-detector distance (m)
-        wavelength=wavelength,  # Wavelength (m)
-    )
+#     ai = AzimuthalIntegrator(
+#         detector=geom.to_pyfai_detector(),
+#         dist=clen,  # Sample-detector distance (m)
+#         wavelength=wavelength,  # Wavelength (m)
+#     )
 
 
 def onEvent(evt):
@@ -169,6 +162,13 @@ def onEvent(evt):
     det = evt["photonPixelDetectors"]["JF4M Stacked"]
 
     det_data = np.moveaxis(det.data[:, 0], (1, 2), (2, 1))
+
+    if [
+        apply_background_division,
+        apply_background_subtraction,
+        apply_running_background_division,
+    ].count(True) != 1:
+        raise Exception("wrong operation setup, one and only one should be true")
 
     if apply_running_background_division:
         if len(running_wfs) > length_running_white_fields:
@@ -190,21 +190,6 @@ def onEvent(evt):
         background_data[background_data <= 1] = 0
         correction_factor = np.nansum(det_data) / np.nansum(background_data)
         det_data = det_data - correction_factor * background_data
-
-    if not any(
-        [
-            apply_background_division,
-            apply_background_subtraction,
-            apply_running_background_division,
-        ]
-    ) or all(
-        [
-            apply_background_division,
-            apply_background_subtraction,
-            apply_running_background_division,
-        ]
-    ):
-        raise Exception("wrong operation setup, one and only one should be true")
 
     msk = (np.isfinite(det_data) & user_mask) * mask_h5
 
