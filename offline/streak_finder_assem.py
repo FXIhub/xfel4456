@@ -158,7 +158,10 @@ def List_streak_finder(rank,frame_id_lst,output_log_file,output_pickle_file,outp
 
         img_array = img_array*mask
         bkg = bkg*mask
-        scale_factor = np.nansum(img_array)/np.nansum(bkg)
+        if bkg_file!='None':
+            scale_factor = 0
+        else:
+            scale_factor = np.nansum(img_array)/np.nansum(bkg)
 
         img_array_bgd_subtracted = img_array - scale_factor*bkg
         bimg_masked = (img_array_bgd_subtracted > thld) * mask
