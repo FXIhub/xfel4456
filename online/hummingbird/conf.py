@@ -27,10 +27,6 @@ state["EuXFEL/MaxTrainAge"] = 1
 state["EuXFEL/FirstCell"] = 0
 state["EuXFEL/LastCell"] = 15
 
-# jf1m_offsets = [(95.0, 564.0), (95.0, 17.0)]
-# jf1m_orient = [(-1, -1), (-1, -1)]
-# geom = extra_geom.JUNGFRAUGeometry.from_module_positions(jf1m_offsets, jf1m_orient)
-
 # geometry ----------------------------------------------------------
 
 geom = extra_geom.JUNGFRAUGeometry.from_crystfel_geom(
@@ -64,7 +60,7 @@ mask_file = f"{prop_dir}/usr/Shared/hummingbird/mask_run128.h5"
 with h5py.File(mask_file, "r") as maskh5:
     mask_h5 = np.array(maskh5["entry_1/goodpixels"])
 
-ring_mask_file = f"{prop_dir}/usr/Shared/hummingbird/mask_ring_r0128.h5"
+ring_mask_file = f"{prop_dir}/usr/Shared/hummingbird/mask_run130.h5"
 with h5py.File(ring_mask_file, "r") as maskh5:
     ring_mask_h5 = np.array(maskh5["entry_1/good_pixels"])
 
@@ -149,6 +145,7 @@ if do_peakfinding:
 
 # if send_profiles:
 #     from pyFAI.azimuthalIntegrator import AzimuthalIntegrator
+
 #     ai = AzimuthalIntegrator(
 #         detector=geom.to_pyfai_detector(),
 #         dist=clen,  # Sample-detector distance (m)
@@ -162,7 +159,8 @@ def onEvent(evt):
     det = evt["photonPixelDetectors"]["JF4M Stacked"]
     det_data = det.data[0]
 
-
+    # roi plot (for pupil counts) ----------------------------------
+    
     roi_data = det_data[6, 20:340, 670:1000]
     intintens = np.nansum(roi_data)
     intintens_rec = add_record(
@@ -199,9 +197,8 @@ def onEvent(evt):
     if apply_background_subtraction:
         background_data[~np.isfinite(background_data)] = 0
         background_data[background_data <= 1] = 0
-        correction_factor = np.nansum(det_data) / np.nansum(background_data)
+        correction_factor = np.nansum(det_data * background_data) / np.nansum(background_data**2)
         det_data = det_data - correction_factor * background_data
-        # det_data /= np.sum(det_data) / det_data.size
 
     msk = (np.isfinite(det_data) & user_mask) * mask_h5
 
@@ -294,7 +291,8 @@ def onEvent(evt):
                 integral_mis, group="Images", history=1, sum_over=True
             )
 
-        # hitrate
+        # hitrate ---------------------------------------------
+        
         evt["analysis"]["isHit"] = streaks.num_streaks > num_streaks_threshold
         analysis.hitfinding.hitrate(
             evt,
