@@ -1,6 +1,7 @@
 import sys
 import os
 import numpy as np
+import time
 import h5py
 import extra_geom
 from hummingbird import plotting
@@ -18,9 +19,11 @@ state = {}
 state["Facility"] = "EuXFEL"
 state["EventIsTrain"] = True
 state["EuXFEL/DataSource"] = "tcp://exflong102-ib:55555"
+state["EuXFEL/DetectorType"] = "Jungfrau"
 state["EuXFEL/DataFormat"] = "Calib"
+state["EuXFEL/DataShape"] = "mfxy"
 state["EuXFEL/SelModule"] = None
-state["EuXFEL/MaxTrainAge"] = 4e20
+state["EuXFEL/MaxTrainAge"] = 1
 state["EuXFEL/FirstCell"] = 0
 state["EuXFEL/LastCell"] = 15
 
@@ -31,7 +34,7 @@ state["EuXFEL/LastCell"] = 15
 # geometry ----------------------------------------------------------
 
 geom = extra_geom.JUNGFRAUGeometry.from_crystfel_geom(
-    os.path.join(prop_dir, "usr/geometry/geom_v5.geom")
+    os.path.join(prop_dir, "usr/geometry/jungfrau_4456_v1.geom")
 )
 nmod = geom.n_modules
 xyz = geom.get_pixel_positions()
@@ -40,13 +43,12 @@ adu_per_photon = 7.4
 clen = 0.55
 wavelength = 10.33e-10
 
-
 # streak finder parameters ---------------------------------------------
 
 streak_finder_thr_percent = 99.5
 streak_finder_min_pixels = 20
 streak_finder_max_area = 800
-streak_finder_num_streaks_threshold = 5
+streak_finder_num_streaks_threshold = 1
 
 # masks ---------------------------------------------------------------
 
@@ -58,19 +60,19 @@ user_mask = np.ones(geom.expected_data_shape, bool)
 # user_mask[:, :, :mrg] = False
 # user_mask[:, :, -mrg:] = False
 
-mask_file = f"{prop_dir}/usr/Shared/hummingbird/hummingbird_current_mask.h5"
+mask_file = f"{prop_dir}/usr/Shared/hummingbird/mask_run128.h5"
 with h5py.File(mask_file, "r") as maskh5:
     mask_h5 = np.array(maskh5["entry_1/goodpixels"])
 
-ring_mask_file = f"{prop_dir}/usr/Shared/hummingbird/mask_combined_with_ring_r0085.h5"
+ring_mask_file = f"{prop_dir}/usr/Shared/hummingbird/mask_ring_r0128.h5"
 with h5py.File(ring_mask_file, "r") as maskh5:
-    ring_mask_h5 = np.array(maskh5["entry_1/goodpixels"])
+    ring_mask_h5 = np.array(maskh5["entry_1/good_pixels"])
 
 mask_h5 = ring_mask_h5 & mask_h5
 
 # background whitefield file (dividing) ------------------------------------------
 
-whitefield_file = f"{prop_dir}/usr/Shared/hummingbird/white_field_run_99.h5"
+whitefield_file = f"{prop_dir}/usr/Shared/hummingbird/white_field_run_128.h5"
 with h5py.File(whitefield_file, "r") as bgh5:
     background_data = np.array(bgh5["entry_1/data/white_field"])
 
@@ -147,27 +149,36 @@ if do_peakfinding:
 
 # if send_profiles:
 #     from pyFAI.azimuthalIntegrator import AzimuthalIntegrator
-
 #     ai = AzimuthalIntegrator(
 #         detector=geom.to_pyfai_detector(),
 #         dist=clen,  # Sample-detector distance (m)
 #         wavelength=wavelength,  # Wavelength (m)
 #     )
 
-
 def onEvent(evt):
     sys.stdout.flush()
     analysis.event.printProcessingRate()
 
     det = evt["photonPixelDetectors"]["JF4M Stacked"]
+    det_data = det.data[0]
 
-    det_data = np.moveaxis(det.data[:, 0], (1, 2), (2, 1))
+
+    roi_data = det_data[6, 20:340, 670:1000]
+    intintens = np.nansum(roi_data)
+    intintens_rec = add_record(
+        evt["analysis"], "analysis", "roi_integral",  intintens
+    )
+    plotting.line.plotHistory(
+        intintens_rec, group="Hitfinding", history=10000
+    )
+    image_roi = add_record(evt["analysis"], "analysis", "ROI", roi_data)
+    plotting.image.plotImage(image_roi, group="Images", history=1)
 
     if [
         apply_background_division,
         apply_background_subtraction,
         apply_running_background_division,
-    ].count(True) != 1:
+    ].count(True) > 1:
         raise Exception("wrong operation setup, one and only one should be true")
 
     if apply_running_background_division:
@@ -190,6 +201,7 @@ def onEvent(evt):
         background_data[background_data <= 1] = 0
         correction_factor = np.nansum(det_data) / np.nansum(background_data)
         det_data = det_data - correction_factor * background_data
+        # det_data /= np.sum(det_data) / det_data.size
 
     msk = (np.isfinite(det_data) & user_mask) * mask_h5
 
@@ -198,6 +210,10 @@ def onEvent(evt):
 
     assem, center = geom.position_modules_fast(masked_data)
     assem[np.isnan(assem)] = -1
+
+    #just_image = add_record(evt["analysis"], "analysis", "Image", assem)
+    #plotting.image.plotImage(just_image, group="Images", history=10, send_rate=2)
+
 
     if do_peakfinding:
         peak_finder._mask = msk.astype(np.int8).reshape(-1, 512)
@@ -248,7 +264,7 @@ def onEvent(evt):
             )
 
             image_hit = add_record(evt["analysis"], "analysis", "Hit", assem)
-            plotting.image.plotImage(image_hit, group="Images", history=10)
+            plotting.image.plotImage(image_hit, group="Images", history=10, send_rate=2)
 
             integral_hit = add_record(
                 evt["analysis"], "analysis", "Hit Integral", assem
