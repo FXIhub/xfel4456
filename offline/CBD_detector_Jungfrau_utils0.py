@@ -257,6 +257,6 @@ def make_white_field_mask(
 
     file_name = f"mask_run{run_id:d}.h5"
     with h5py.File(file_name, "w") as df:
-        df.create_dataset("/entry_1/goodpixels", data=mask.astype("bool"))
+        df.create_dataset("/entry_1/good_pixels", data=mask.astype("bool"))
 
     return
