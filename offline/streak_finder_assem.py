@@ -117,7 +117,7 @@ def List_streak_finder(rank,frame_id_lst,output_log_file,output_pickle_file,outp
     if bkg_file!='None':
         bkg_file=os.path.abspath(args.bkg_file)
         b=h5py.File(bkg_file,'r')
-        bkg=np.array(b['/entry_1/data/white_field'])
+        bkg=np.array(b['/entry_1/data/median_white_field'])
         b.close()
         geom = JUNGFRAUGeometry.from_crystfel_geom(geom_file)
         bkg, center = geom.position_modules_fast(bkg)
