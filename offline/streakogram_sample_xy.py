@@ -25,7 +25,7 @@ with h5py.File(events_fnam) as f:
     y = f['entry_1/sample_pos_mm_y'][()]
 
 # get total streak intensities per frame
-frame_streak_intensity = np.bincount(streak_list['frame_index'], weights = streak_list['intensity'])
+frame_streak_intensity = np.bincount(streak_list['frame_index'], weights = streak_list['intensity'], minlength=trainID.shape[0])
 
 # now generate 2D histogram
 bins = int(round(x.shape[0]**0.5/3))
@@ -44,5 +44,6 @@ ax.set_title(f'total streak intensity vs sample position run {run}')
 ax.scatter(x, y, s = 1)
 
 plt.colorbar(im)
+print('saving plot to', out_fnam)
 plt.savefig(out_fnam)
 plt.show()
