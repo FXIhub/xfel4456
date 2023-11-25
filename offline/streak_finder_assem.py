@@ -5,7 +5,8 @@ streak finding for the assembled image from JUNGFRAU detector.
 import argparse
 PREFIX      = '/gpfs/exfel/exp/SPB/202302/p004456/'
 # geom_file = '/gpfs/exfel/exp/XMPL/201750/p700000/proc/r0040/j4m-p2805_v03.geom'
-geom_file = '/gpfs/exfel/exp/SPB/202302/p004456/usr/geometry/geom_v5.geom'
+# geom_file = '/gpfs/exfel/exp/SPB/202302/p004456/usr/geometry/geom_v5.geom'
+geom_file = '/gpfs/exfel/exp/SPB/202302/p004456/scratch/yefanov/jungfrau_p3487_v2_sum.geom'
 proposal = 4456
 parser = argparse.ArgumentParser(description='Find streaks in assembled image and output list to scratch/peak_info/run<run>.h5.')
 parser.add_argument('--run', type=int, help='Run number', required=True)
@@ -116,7 +117,7 @@ def List_streak_finder(rank,frame_id_lst,output_log_file,output_pickle_file,outp
     if bkg_file!='None':
         bkg_file=os.path.abspath(args.bkg_file)
         b=h5py.File(bkg_file,'r')
-        bkg=np.array(b['/entry_1/data/white_field'])
+        bkg=np.array(b['/entry_1/data/median_white_field'])
         b.close()
         geom = JUNGFRAUGeometry.from_crystfel_geom(geom_file)
         bkg, center = geom.position_modules_fast(bkg)
@@ -157,7 +158,10 @@ def List_streak_finder(rank,frame_id_lst,output_log_file,output_pickle_file,outp
 
         img_array = img_array*mask
         bkg = bkg*mask
-        scale_factor = np.nansum(img_arry)/np.nansum(bkg)
+        if bkg_file=='None':
+            scale_factor = 0
+        elif bkg_file!='None':
+            scale_factor = np.nansum(img_array)/np.nansum(bkg)
 
         img_array_bgd_subtracted = img_array - scale_factor*bkg
         bimg_masked = (img_array_bgd_subtracted > thld) * mask
