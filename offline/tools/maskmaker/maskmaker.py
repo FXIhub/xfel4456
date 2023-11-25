@@ -362,7 +362,8 @@ class Application:
         
         m = np.zeros_like(self.mask)
         for i0, j0 in np.transpose(np.where(self.brush_img.image[:,:,0] > 0)):
-            if (0 <= i0 < self.image_shape[0]) and (0 <= j0 < self.image_shape[1]) and not self.background_mask[i0*self.image_shape[1]+ j0]:
+            print(i0, j0, self.image_shape, self.background_mask.shape)
+            if (0 <= i0 < self.image_shape[0]) and (0 <= j0 < self.image_shape[1]) and not self.background_mask[i0, j0]:
                 m[self.index_map[i0, j0]] = True
                     
         self.discard_brush()
@@ -530,7 +531,7 @@ if __name__ == '__main__':
         with h5py.File(args.geometry) as f:
             xyz = f[args.geometry_path][()]
     else :
-        fnam_xyz = '/gpfs/exfel/exp/SPB/202302/p004456/scratch/det/jungfrau_xyz_map.pickle'
+        fnam_xyz = '/gpfs/exfel/exp/SPB/202302/p004456/usr/Shared/amorgan/jungfrau_xyz_map.pickle'
         xyz = pickle.load(open(fnam_xyz, 'rb'))
     
     if args.mask is not None :

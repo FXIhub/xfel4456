@@ -25,7 +25,7 @@ def main():
     parser.add_argument('run', help='Run number', type=int)
     parser.add_argument('da_num', help='DA file number in raw data', type=int)
     parser.add_argument('value_dataset', help='Dataset name in raw DA data')
-    parser.add_argument('output_name', help='Output dataset name in events file (eg. pp_delay_ps for pump-probe delay)')
+    parser.add_argument('output_dataset', help='Output dataset name in events file (eg. pp_delay_ps for pump-probe delay)')
     parser.add_argument('-f', '--force', help='Overwrite data if already exists', action='store_true')
     args = parser.parse_args()
 

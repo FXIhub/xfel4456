@@ -186,7 +186,7 @@ jungfrau_geom = extra_geom.JUNGFRAUGeometry.from_crystfel_geom(args.geom_file)
 beam_center_m = {"x": args.beam_center_x, "y": args.beam_center_y}
 
 with h5py.File(args.events_file, "r") as h5:
-    streak_list = np.asarray(h5["streak_list"], dtype=streak_dtype)
+    streak_list = np.asarray(h5["/entry_1/streak_list"], dtype=streak_dtype)
 
 print(f"found {len(streak_list)} streaks in {args.events_file}")
 

@@ -114,7 +114,7 @@ class StreakHitFinder():
                     ) = single_streak_finder(img_array=frame[m],
                                              thld=percentile_threshold,
                                              min_pix=STREAK_MIN_PIX)
-
+                    
                     # number of streaks
                     streaks[i] += len(label_filtered_sorted)
 
