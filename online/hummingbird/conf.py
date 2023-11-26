@@ -12,7 +12,8 @@ from hummingbird.backend import add_record
 prop_dir = "/gpfs/exfel/exp/SPB/202302/p004456"
 sys.path.append(os.path.join(prop_dir, "usr/Shared/hummingbird/utils"))
 
-from draw import PseudoPowderDiffraction, Peakogram
+from draw import PseudoPowderDiffraction
+from draw import Peakogram
 
 
 state = {}
@@ -41,11 +42,11 @@ wavelength = 10.33e-10
 
 # streak finder parameters ---------------------------------------------
 
-streak_finder_thr_value = 50
+streak_finder_thr_value = 30
 streak_finder_thr_is_percent = False
 streak_finder_min_pixels = 5
 streak_finder_max_area = 800
-streak_finder_num_streaks_threshold = 5
+streak_finder_num_streaks_threshold = 3
 
 # masks ---------------------------------------------------------------
 
@@ -59,13 +60,13 @@ user_mask = np.ones(geom.expected_data_shape, bool)
 
 mask_file = f"{prop_dir}/usr/Shared/hummingbird/mask_run128.h5"
 with h5py.File(mask_file, "r") as maskh5:
-    mask_h5 = np.array(maskh5["entry_1/goodpixels"])
+    mask_run_h5 = np.array(maskh5["entry_1/goodpixels"])
 
 ring_mask_file = f"{prop_dir}/usr/Shared/hummingbird/asic_gap_mask.h5"
 with h5py.File(ring_mask_file, "r") as maskh5:
     ring_mask_h5 = np.array(maskh5["entry_1/goodpixels"])
 
-mask_h5_global = ring_mask_h5 & mask_h5 & user_mask
+mask_h5_global = ring_mask_h5 & mask_run_h5 & user_mask
 
 # background whitefield file (dividing) ------------------------------------------
 
@@ -73,8 +74,9 @@ whitefield_file = f"{prop_dir}/usr/Shared/hummingbird/median_white_field_run_196
 with h5py.File(whitefield_file, "r") as bgh5:
     bg_data = np.array(bgh5["entry_1/data/median_white_field"])
 
-# zeroing this for now
-# background_data = np.zeros(geom.expected_data_shape, float)
+
+# background_data = np.ones(geom.expected_data_shape, np.float64)
+background_data = np.zeros(geom.expected_data_shape, np.float64)
 
 # median_whitefield_file = (
 #     f"{prop_dir}/usr/Shared/hummingbird/median_white_field_run_99.h5"
@@ -84,7 +86,7 @@ with h5py.File(whitefield_file, "r") as bgh5:
 
 # running white field background ------------------------------------------------
 
-running_white_fields = [np.ones(geom.expected_data_shape, float)]
+running_white_fields = [np.zeros(geom.expected_data_shape, float)]
 length_running_white_fields = 100
 
 # operations ------------------------------------------------------------------
@@ -95,7 +97,8 @@ do_streakfinding = True
 apply_running_background_division = False
 apply_background_division = False
 
-apply_running_background_subtraction = True
+apply_running_background_subtraction = False
+apply_running_median_background_subtraction = True
 apply_background_subtraction = False
 
 # ---------------------------------------------------------
@@ -175,6 +178,12 @@ def onEvent(evt):
     background_data = bg_data.copy()
     mask_h5 = mask_h5_global.copy()
 
+    def update_running_whitefields(detdata):
+        if ipc.mpi.is_main_event_reader():
+            if len(running_white_fields) > length_running_white_fields:
+                running_white_fields.pop(0)
+            running_white_fields.append(detdata)
+
     sys.stdout.flush()
     analysis.event.printProcessingRate()
 
@@ -195,6 +204,7 @@ def onEvent(evt):
         apply_background_subtraction,
         apply_running_background_division,
         apply_running_background_subtraction,
+        apply_running_median_background_subtraction,
     ].count(True) > 1:
         raise Exception("wrong operation setup, one and only one should be true")
 
@@ -204,39 +214,45 @@ def onEvent(evt):
         det_data = det_data / background_data
 
     if apply_running_background_division:
-        if len(running_white_fields) > length_running_white_fields:
-            running_white_fields.pop(0)
-        running_white_fields.append(det_data)
-
+        update_running_whitefields(det_data)
         running_white_field = np.mean(running_white_fields, axis=0, dtype=float)
         running_white_field[~np.isfinite(running_white_field)] = 1
         running_white_field[background_data <= 1] = 1
         det_data = det_data / running_white_field
 
+    # correction factor sum(det_data)/ sum(background) after talking with Henry (26.11, 9:50AM)
+    # before it was sum(det_data*background) / sum(background*2)
     if apply_background_subtraction:
         background_data[~np.isfinite(background_data)] = 0
         background_data[background_data <= 1] = 0
         if np.nansum(background_data) < 1e-5:
             correction_factor = 1.0
         else:
-            correction_factor = np.nansum(det_data * background_data) / np.nansum(
-                background_data**2
-            )
+            correction_factor = np.nansum(det_data) / np.nansum(background_data)
         det_data = det_data - correction_factor * background_data
 
     if apply_running_background_subtraction:
-        if len(running_white_fields) > length_running_white_fields:
-            running_white_fields.pop(0)
-        running_white_fields.append(det_data)
-        running_white_field = np.mean(running_white_fields, axis=0, dtype=float)
-
+        update_running_whitefields(det_data)
+        running_white_field = np.mean(running_white_fields, axis=0, dtype=np.float64)
         running_white_field[~np.isfinite(running_white_field)] = 0
-        running_white_field[background_data <= 1] = 0
+        running_white_field[background_data < 1] = 0
+
         background_data = running_white_field.copy()
-        correction_factor = np.nansum(det_data * background_data) / np.nansum(
-            background_data**2
-        )
+        correction_factor = np.nansum(det_data) / np.nansum(background_data)
+
+        if ipc.mpi.is_main_event_reader():
+            print(f"{correction_factor=}, {len(running_white_fields)=}")
+
         det_data = det_data - correction_factor * background_data
+
+    if apply_running_median_background_subtraction:
+        update_running_whitefields(det_data)
+        running_white_field = np.median(running_white_fields, axis=0)
+        running_white_field[~np.isfinite(running_white_field)] = 0
+        running_white_field[background_data < 1] = 0
+
+        background_data = running_white_field.copy()
+        det_data = det_data - background_data
 
     msk = (np.isfinite(det_data) & user_mask) * mask_h5
 
