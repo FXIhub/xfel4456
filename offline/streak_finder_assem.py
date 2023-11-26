@@ -210,7 +210,7 @@ def List_streak_finder(rank,frame_id_lst,output_log_file,output_pickle_file,outp
             peakYPosRaw[event_no,:nPeaks[event_no]]=weighted_centroid_filtered[:nPeaks[event_no],1]+y_min
 
 
-        if (peak_no>=args.min_peak) and (peak_no<=8) and (np.nansum(img_arry)<1e8):
+        if (peak_no>=args.min_peak) and (peak_no<=20) and (np.nansum(img_array)<1e8):
             HIT_counter+=1
             HIT_frame_id_list.append(frame_id)
 
