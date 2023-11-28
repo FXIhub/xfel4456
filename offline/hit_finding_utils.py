@@ -15,9 +15,9 @@ def single_streak_finder(
     area_max_size=5e8,
 ):
     # start_time = time.time()
-    if mask is None : 
+    if mask is None :
         mask = np.ones_like(img_array).astype(bool)
-    
+
     img_array_bgd_subtracted = img_array - bkg
     bimg_masked = (img_array_bgd_subtracted > thld) * mask
 
@@ -34,21 +34,21 @@ def single_streak_finder(
     # minor_axis_length = np.array([r.minor_axis_length for r in props]).reshape(-1, )
     # aspect_ratio = major_axis_length / (minor_axis_length + 1)
     # coords=np.array([r.coords for r in props]).reshape(-1,)
-    
+
     label = np.array([r.label for r in props]).reshape(
         -1,
     )
-  
+
     # centroid = np.array([np.array(r.centroid).reshape(1, 2) for r in props]).reshape((-1, 2))
     # weighted_centroid = np.array([r.weighted_centroid for r in props]).reshape(-1, )
     #     label_filtered=label[(area>min_pix)*(area<5e8)*(aspect_ratio>2)]
-    
+
     label_filtered = label[(area > min_pix) * (area < area_max_size)]
     #     area_filtered=area[(area>min_pix)*(area<5e8)*(aspect_ratio>2)]
     area_filtered = area[(area > min_pix) * (area < area_max_size)]
     area_sort_ind = np.argsort(area_filtered)[::-1]
     label_filtered_sorted = label_filtered[area_sort_ind]
-    
+
     # area_filtered_sorted = area_filtered[area_sort_ind]
 
     # weighted_centroid_filtered_start_time = time.time()
@@ -58,13 +58,13 @@ def single_streak_finder(
         weighted_centroid_filtered[index, :] = np.array(
             props[value - 1].weighted_centroid
         )
-      
+
     # print('In image: %s \n %5d peaks are found' %(img_file_name, len(label_filtered_sorted)))
     # beam_center=np.array([1492.98,2163.41])
-    
+
     # weighted_centroid_filtered_end_timee = time.time()
     # print(f"weight timings {weighted_centroid_filtered_end_timee-weighted_centroid_filtered_start_time:.10f}")
-    
+
     # end_time = time.time()
     # print(f"full timing {end_time - start_time}")
     return (
@@ -86,7 +86,7 @@ def plot_streaks(
         fig_filename="streak_finding.png",
     ):
 
-    plt.figure(figsize=(15, 15))
+    plt.figure(figsize=(10, 10))
     plt.imshow(img_array * (mask.astype(np.int16)) if mask is not None else img_array, cmap="viridis", origin="upper")
     plt.colorbar()
     # plt.clim(0,0.5*thld)
@@ -112,4 +112,3 @@ def plot_streaks(
         plt.show()
     else:
         plt.savefig(fig_filename)
-
