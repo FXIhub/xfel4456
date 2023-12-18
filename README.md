@@ -1,4 +1,4 @@
-# Ananysis code for p004456
+# Analysis code for p004456
 
 Experiment directory:
 ```
